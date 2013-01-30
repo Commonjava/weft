@@ -83,6 +83,9 @@ public class ExecutorProvider
         ExecutorService service = services.get( name );
         if ( service == null )
         {
+            final ClassLoader ccl = Thread.currentThread()
+                                          .getContextClassLoader();
+
             service = Executors.newFixedThreadPool( threadCount, new ThreadFactory()
             {
                 private int counter = 0;
@@ -91,6 +94,7 @@ public class ExecutorProvider
                 public Thread newThread( final Runnable runnable )
                 {
                     final Thread t = new Thread( runnable );
+                    t.setContextClassLoader( ccl );
                     t.setName( name + "-" + counter++ );
                     t.setDaemon( daemon );
                     t.setPriority( priority );
