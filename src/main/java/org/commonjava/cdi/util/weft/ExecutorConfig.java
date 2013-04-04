@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
 public @interface ExecutorConfig
 {
 
-    int threads();
+    int threads() default 4;
 
     int priority() default 3;
 
