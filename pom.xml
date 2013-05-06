@@ -24,7 +24,7 @@
   
   <groupId>org.commonjava.cdi.util</groupId>
   <artifactId>weft</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.2</version>
   
   <name>Weft CDI-Thread/Executor Provider</name>
 
