@@ -27,7 +27,9 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Inject;
 
+import org.commonjava.cdi.util.weft.config.WeftConfig;
 import org.commonjava.util.logging.Logger;
 
 @ApplicationScoped
@@ -37,6 +39,9 @@ public class ExecutorProvider
     private final Map<String, ExecutorService> services = new HashMap<String, ExecutorService>();
 
     private final Logger logger = new Logger( getClass() );
+
+    @Inject
+    private WeftConfig config;
 
     @PreDestroy
     public void shutdown()
@@ -71,15 +76,13 @@ public class ExecutorProvider
         final ExecutorConfig ec = ip.getAnnotated()
                                     .getAnnotation( ExecutorConfig.class );
 
-        int threadCount = Runtime.getRuntime()
-                                 .availableProcessors() * 2;
+        Integer threadCount = null;
+        Integer priority = null;
 
         boolean daemon = true;
 
-        int priority = 3;
-
         // TODO: This may cause counter-intuitive sharing of thread pools for un-annotated injections...
-        String name = "Unknown";
+        String name = "weft-unannotated";
 
         if ( ec != null )
         {
@@ -89,11 +92,13 @@ public class ExecutorProvider
             daemon = ec.daemon();
         }
 
+        threadCount = config.getThreads( name, threadCount );
+        priority = config.getPriority( name, priority );
+
         return getService( name, priority, threadCount, daemon );
     }
 
-    private synchronized ExecutorService getService( final String name, final int priority, final int threadCount,
-                                                     final boolean daemon )
+    private synchronized ExecutorService getService( final String name, final int priority, final int threadCount, final boolean daemon )
     {
         ExecutorService service = services.get( name );
         if ( service == null )
