@@ -52,15 +52,8 @@ public abstract class StoppableRunnable
         {
             myThread = null;
         }
-
-        doPostExecute();
     }
 
     protected abstract void doExecute();
-
-    protected void doPostExecute()
-    {
-
-    }
 
 }
