@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +37,7 @@ import org.commonjava.util.logging.Logger;
 public class ExecutorProvider
 {
 
-    private final Map<String, ExecutorService> services = new HashMap<String, ExecutorService>();
+    private final Map<String, ScheduledExecutorService> services = new HashMap<>();
 
     private final Logger logger = new Logger( getClass() );
 
@@ -46,7 +47,7 @@ public class ExecutorProvider
     @PreDestroy
     public void shutdown()
     {
-        for ( final Map.Entry<String, ExecutorService> entry : services.entrySet() )
+        for ( final Map.Entry<String, ScheduledExecutorService> entry : services.entrySet() )
         {
             final ExecutorService service = entry.getValue();
 
@@ -71,7 +72,7 @@ public class ExecutorProvider
     }
 
     @Produces
-    public ExecutorService getExecutorService( final InjectionPoint ip )
+    public ScheduledExecutorService getExecutorService( final InjectionPoint ip )
     {
         final ExecutorConfig ec = ip.getAnnotated()
                                     .getAnnotation( ExecutorConfig.class );
@@ -98,15 +99,15 @@ public class ExecutorProvider
         return getService( name, priority, threadCount, daemon );
     }
 
-    private synchronized ExecutorService getService( final String name, final int priority, final int threadCount, final boolean daemon )
+    private synchronized ScheduledExecutorService getService( final String name, final int priority, final int threadCount, final boolean daemon )
     {
-        ExecutorService service = services.get( name );
+        ScheduledExecutorService service = services.get( name );
         if ( service == null )
         {
             final ClassLoader ccl = Thread.currentThread()
                                           .getContextClassLoader();
 
-            service = Executors.newFixedThreadPool( threadCount, new ThreadFactory()
+            service = Executors.newScheduledThreadPool( threadCount, new ThreadFactory()
             {
                 private int counter = 0;
 

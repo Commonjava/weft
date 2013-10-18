@@ -36,7 +36,17 @@ public abstract class StoppableRunnable
             myThread = Thread.currentThread();
         }
 
+        if ( myThread.isInterrupted() )
+        {
+            return;
+        }
+
         doExecute();
+
+        if ( myThread.isInterrupted() )
+        {
+            return;
+        }
 
         synchronized ( this )
         {
