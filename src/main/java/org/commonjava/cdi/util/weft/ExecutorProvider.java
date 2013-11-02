@@ -67,6 +67,9 @@ public class ExecutorProvider
             }
             catch ( final InterruptedException e )
             {
+                Thread.currentThread()
+                      .interrupt();
+                return;
             }
         }
     }
