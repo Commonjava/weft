@@ -16,7 +16,7 @@ public class DefaultWeftConfig
 
     private static final int DEFAULT_PRIORITY = 8;
 
-    private final Map<String, Integer> config = new HashMap<>();
+    private final Map<String, Integer> config = new HashMap<String, Integer>();
 
     private int defaultThreads = DEFAULT_THREADS;
 

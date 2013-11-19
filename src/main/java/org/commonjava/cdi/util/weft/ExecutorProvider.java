@@ -37,7 +37,7 @@ import org.commonjava.util.logging.Logger;
 public class ExecutorProvider
 {
 
-    private final Map<String, ScheduledExecutorService> services = new HashMap<>();
+    private final Map<String, ScheduledExecutorService> services = new HashMap<String, ScheduledExecutorService>();
 
     private final Logger logger = new Logger( getClass() );
 
