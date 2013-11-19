@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
@@ -107,25 +106,7 @@ public class ExecutorProvider
         ScheduledExecutorService service = services.get( name );
         if ( service == null )
         {
-            final ClassLoader ccl = Thread.currentThread()
-                                          .getContextClassLoader();
-
-            service = Executors.newScheduledThreadPool( threadCount, new ThreadFactory()
-            {
-                private int counter = 0;
-
-                @Override
-                public Thread newThread( final Runnable runnable )
-                {
-                    final Thread t = new Thread( runnable );
-                    t.setContextClassLoader( ccl );
-                    t.setName( name + "-" + counter++ );
-                    t.setDaemon( daemon );
-                    t.setPriority( priority );
-
-                    return t;
-                }
-            } );
+            service = Executors.newScheduledThreadPool( threadCount, new NamedThreadFactory( name, daemon, priority ) );
 
             services.put( name, service );
         }
