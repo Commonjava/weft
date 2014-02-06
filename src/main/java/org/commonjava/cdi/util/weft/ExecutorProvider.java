@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
@@ -37,7 +38,7 @@ import org.commonjava.util.logging.Logger;
 public class ExecutorProvider
 {
 
-    private final Map<String, ScheduledExecutorService> services = new HashMap<String, ScheduledExecutorService>();
+    private final Map<String, ExecutorService> services = new HashMap<String, ExecutorService>();
 
     private final Logger logger = new Logger( getClass() );
 
@@ -47,7 +48,7 @@ public class ExecutorProvider
     @PreDestroy
     public void shutdown()
     {
-        for ( final Map.Entry<String, ScheduledExecutorService> entry : services.entrySet() )
+        for ( final Map.Entry<String, ExecutorService> entry : services.entrySet() )
         {
             final ExecutorService service = entry.getValue();
 
@@ -75,12 +76,24 @@ public class ExecutorProvider
     }
 
     @Produces
-    public ScheduledExecutorService getExecutorService( final InjectionPoint ip )
+    public ExecutorService getExecutorService( final InjectionPoint ip )
+    {
+        return getExec( ip, false );
+    }
+
+    @Produces
+    @ScheduledExecutor
+    public ScheduledExecutorService getScheduledExecutorService( final InjectionPoint ip )
+    {
+        return (ScheduledExecutorService) getExec( ip, true );
+    }
+
+    private ExecutorService getExec( final InjectionPoint ip, final boolean scheduled )
     {
         final ExecutorConfig ec = ip.getAnnotated()
                                     .getAnnotation( ExecutorConfig.class );
 
-        Integer threadCount = null;
+        Integer threadCount = 0;
         Integer priority = null;
 
         boolean daemon = true;
@@ -99,17 +112,31 @@ public class ExecutorProvider
         threadCount = config.getThreads( name, threadCount );
         priority = config.getPriority( name, priority );
 
-        return getService( name, priority, threadCount, daemon );
-    }
-
-    private synchronized ScheduledExecutorService getService( final String name, final int priority, final int threadCount, final boolean daemon )
-    {
-        ScheduledExecutorService service = services.get( name );
+        final String key = name + ":" + ( scheduled ? "scheduled" : "" );
+        ExecutorService service = services.get( key );
         if ( service == null )
         {
-            service = Executors.newScheduledThreadPool( threadCount, new NamedThreadFactory( name, daemon, priority ) );
+            final ThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
 
-            services.put( name, service );
+            if ( scheduled )
+            {
+                if ( threadCount < 1 )
+                {
+                    throw new RuntimeException( ip + " must specify a non-zero number for threads parameter in @ExecutorConfig." );
+                }
+
+                service = Executors.newScheduledThreadPool( threadCount, fac );
+            }
+            else if ( threadCount > 0 )
+            {
+                service = Executors.newFixedThreadPool( threadCount, fac );
+            }
+            else
+            {
+                service = Executors.newCachedThreadPool( fac );
+            }
+
+            services.put( key, service );
         }
 
         return service;
