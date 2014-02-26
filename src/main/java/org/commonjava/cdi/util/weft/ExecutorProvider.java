@@ -32,7 +32,8 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
 
 import org.commonjava.cdi.util.weft.config.WeftConfig;
-import org.commonjava.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class ExecutorProvider
@@ -40,7 +41,7 @@ public class ExecutorProvider
 
     private final Map<String, ExecutorService> services = new HashMap<String, ExecutorService>();
 
-    private final Logger logger = new Logger( getClass() );
+    private final Logger logger = LoggerFactory.getLogger( getClass() );
 
     @Inject
     private WeftConfig config;
@@ -62,7 +63,7 @@ public class ExecutorProvider
                     final List<Runnable> running = service.shutdownNow();
                     if ( !running.isEmpty() )
                     {
-                        logger.warn( "%d tasks remain for executor: %s", running.size(), entry.getKey() );
+                        logger.warn( "{} tasks remain for executor: {}", running.size(), entry.getKey() );
                     }
                 }
             }

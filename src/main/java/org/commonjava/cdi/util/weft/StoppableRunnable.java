@@ -16,12 +16,13 @@
  ******************************************************************************/
 package org.commonjava.cdi.util.weft;
 
-import org.commonjava.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class StoppableRunnable
     implements Runnable
 {
-    protected final Logger logger = new Logger( getClass() );
+    protected final Logger logger = LoggerFactory.getLogger( getClass() );
 
     private boolean stop = false;
 

@@ -52,7 +52,7 @@
       <dependency>
         <groupId>org.commonjava.boms</groupId>
         <artifactId>web-commons-bom</artifactId>
-        <version>4</version>
+        <version>8-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -60,10 +60,6 @@
   </dependencyManagement>
   
   <dependencies>
-    <dependency>
-      <groupId>org.commonjava.util</groupId>
-      <artifactId>logging</artifactId>
-    </dependency>
     
     <dependency>
       <groupId>javax.inject</groupId>
@@ -72,6 +68,14 @@
     <dependency>
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
   </dependencies>
   
