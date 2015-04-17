@@ -42,20 +42,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <distributionManagement>
-    <snapshotRepository>
-      <id>local-snapshots</id>
-      <name>Local Snapshots</name>
-      <url>http://localhost:9080/aprox/api/1.0/group/public/</url>
-    </snapshotRepository>
-  </distributionManagement>
-  
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.commonjava.boms</groupId>
         <artifactId>web-commons-bom</artifactId>
-        <version>8</version>
+        <version>16-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -82,17 +74,4 @@
     </dependency>
   </dependencies>
   
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
 </project>
