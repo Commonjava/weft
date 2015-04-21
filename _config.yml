@@ -6,7 +6,8 @@ defaults:
     values:
       layout: "slate"
 
-title: "Commonjava :: Weft"
+siteTitle: "Commonjava"
+projectTitle: " :: Weft"
 tagline: "CDI-Thread/Executor Provider"
 owner: "John Casey"
 ownerEmail: jdcasey@commonjava.org
