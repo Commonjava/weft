@@ -18,6 +18,7 @@ package org.commonjava.cdi.util.weft;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class ExecutorProvider
 {
 
-    private final Map<String, ExecutorService> services = new HashMap<String, ExecutorService>();
+    private final Map<String, ExecutorService> services = new ConcurrentHashMap<String, ExecutorService>();
 
     private final Logger logger = LoggerFactory.getLogger( getClass() );
 
@@ -76,13 +77,14 @@ public class ExecutorProvider
     }
 
     @Produces
+    @WeftManaged
     public ExecutorService getExecutorService( final InjectionPoint ip )
     {
         return getExec( ip, false );
     }
 
     @Produces
-    @ScheduledExecutor
+    @WeftScheduledExecutor
     public ScheduledExecutorService getScheduledExecutorService( final InjectionPoint ip )
     {
         return (ScheduledExecutorService) getExec( ip, true );
