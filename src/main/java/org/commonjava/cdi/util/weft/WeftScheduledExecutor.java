@@ -29,7 +29,7 @@ import javax.inject.Qualifier;
 @Retention( RetentionPolicy.RUNTIME )
 @Target( { METHOD, FIELD, PARAMETER, TYPE } )
 @Qualifier
-public @interface ScheduledExecutor
+public @interface WeftScheduledExecutor
 {
 
 }
