@@ -21,12 +21,12 @@
   <parent>
     <groupId>org.commonjava</groupId>
     <artifactId>commonjava</artifactId>
-    <version>9-SNAPSHOT</version>
+    <version>11</version>
   </parent>
   
   <groupId>org.commonjava.cdi.util</groupId>
   <artifactId>weft</artifactId>
-  <version>0.9-SNAPSHOT</version>
+  <version>1.1-SNAPSHOT</version>
   
   <name>Weft CDI-Thread/Executor Provider</name>
   <inceptionYear>2013</inceptionYear>
@@ -64,6 +64,10 @@
     <dependency>
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
