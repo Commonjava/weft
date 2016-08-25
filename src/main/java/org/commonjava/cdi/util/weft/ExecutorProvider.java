@@ -46,6 +46,8 @@ public class ExecutorProvider
     @Inject
     private WeftConfig config;
 
+    private SingleThreadedExecutorService singleThreaded = new SingleThreadedExecutorService();
+
     @PreDestroy
     public void shutdown()
     {
@@ -111,6 +113,11 @@ public class ExecutorProvider
             daemon = ec.daemon();
         }
 
+        if ( !config.isEnabled() || !config.isEnabled( name ) )
+        {
+            return singleThreaded;
+        }
+
         threadCount = config.getThreads( name, threadCount );
         priority = config.getPriority( name, priority );
 
@@ -137,6 +144,8 @@ public class ExecutorProvider
             {
                 service = Executors.newCachedThreadPool( fac );
             }
+
+            // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
             services.put( key, service );
         }
