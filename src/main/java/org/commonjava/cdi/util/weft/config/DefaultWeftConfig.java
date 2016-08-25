@@ -31,6 +31,10 @@ public class DefaultWeftConfig
 
     private static final int DEFAULT_PRIORITY = 8;
 
+    private boolean enabled;
+
+    private final Map<String, Boolean> enabledPools = new HashMap<>();
+
     private final Map<String, Integer> config = new HashMap<String, Integer>();
 
     private int defaultThreads = DEFAULT_THREADS;
@@ -83,6 +87,34 @@ public class DefaultWeftConfig
         config.put( name + PRIORITY_SUFFIX, priority );
 
         return this;
+    }
+
+    public DefaultWeftConfig configureEnabled( final String name, final boolean enabled )
+    {
+        enabledPools.put( name, enabled );
+        return this;
+    }
+
+    public DefaultWeftConfig configureEnabled( boolean enabled )
+    {
+        this.enabled = enabled;
+        return this;
+    }
+
+    public boolean isEnabled()
+    {
+        return enabled;
+    }
+
+    public boolean isEnabled( String name )
+    {
+        if ( !isEnabled() )
+        {
+            return false;
+        }
+
+        Boolean result = enabledPools.get( name );
+        return result == null ? isEnabled() : result;
     }
 
     @Override

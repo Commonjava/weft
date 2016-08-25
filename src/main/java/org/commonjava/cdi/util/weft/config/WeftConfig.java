@@ -18,6 +18,10 @@ package org.commonjava.cdi.util.weft.config;
 public interface WeftConfig
 {
 
+    boolean isEnabled();
+
+    boolean isEnabled( String poolName );
+
     int getThreads( String poolName );
 
     int getPriority( String poolName );
