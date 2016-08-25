@@ -31,7 +31,7 @@ public class DefaultWeftConfig
 
     private static final int DEFAULT_PRIORITY = 8;
 
-    private boolean enabled;
+    private boolean enabled = true;
 
     private final Map<String, Boolean> enabledPools = new HashMap<>();
 
