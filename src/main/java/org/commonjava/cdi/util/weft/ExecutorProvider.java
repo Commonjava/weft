@@ -145,6 +145,8 @@ public class ExecutorProvider
                 service = Executors.newCachedThreadPool( fac );
             }
 
+            service = new ContextSensitiveExecutorService( service );
+
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
             services.put( key, service );
