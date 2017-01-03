@@ -39,6 +39,7 @@
   </scm>
 
   <properties>
+    <javaVersion>1.8</javaVersion>
     <projectOwner>Red Hat, Inc.</projectOwner>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
