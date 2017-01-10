@@ -1,5 +1,8 @@
 package org.commonjava.cdi.util.weft;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -150,6 +153,8 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
         ThreadContext ctx = ThreadContext.getContext( false );
         return collection.parallelStream().map( ( callable ) -> {
             ThreadContext old = ThreadContext.setContext( ctx );
+            Logger logger = LoggerFactory.getLogger( getClass() );
+            logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
             return (Callable<T>) () -> {
                 try
                 {
@@ -157,6 +162,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
                 }
                 finally
                 {
+                    logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                     ThreadContext.setContext( old );
                 }
             };
@@ -168,12 +174,15 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
         ThreadContext ctx = ThreadContext.getContext( false );
         return ()->{
             ThreadContext old = ThreadContext.setContext( ctx );
+            Logger logger = LoggerFactory.getLogger( getClass() );
+            logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
             try
             {
                 runnable.run();
             }
             finally
             {
+                logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
             }
         };
@@ -184,12 +193,15 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
         ThreadContext ctx = ThreadContext.getContext( false );
         return (Callable<T>) ()->{
             ThreadContext old = ThreadContext.setContext( ctx );
+            Logger logger = LoggerFactory.getLogger( getClass() );
+            logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
             try
             {
                 return callable.call();
             }
             finally
             {
+                logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
             }
         };
