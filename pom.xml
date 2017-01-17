@@ -49,7 +49,7 @@
       <dependency>
         <groupId>org.commonjava.boms</groupId>
         <artifactId>web-commons-bom</artifactId>
-        <version>16</version>
+        <version>21</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
