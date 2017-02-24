@@ -15,6 +15,8 @@
  */
 package org.commonjava.cdi.util.weft;
 
+import org.slf4j.MDC;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,12 +35,15 @@ public class ThreadContext implements Map<String, Object>
 
     private final Map<String, Object> contextMap = new ConcurrentHashMap<>();
 
+    private Map<String, String> mdcMap; // mapped diagnostic context
+
     public static ThreadContext getContext( boolean create )
     {
         ThreadContext threadContext = THREAD_LOCAL.get();
         if ( threadContext == null && create )
         {
             threadContext = new ThreadContext();
+            threadContext.mdcMap = MDC.getCopyOfContextMap();
             THREAD_LOCAL.set( threadContext );
         }
 
@@ -49,7 +54,10 @@ public class ThreadContext implements Map<String, Object>
     {
         ThreadContext oldCtx = THREAD_LOCAL.get();
         THREAD_LOCAL.set( ctx );
-
+        if ( ctx != null )
+        {
+            MDC.setContextMap(ctx.mdcMap);
+        }
         return oldCtx;
     }
 
