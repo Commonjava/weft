@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.commonjava</groupId>
     <artifactId>commonjava</artifactId>
-    <version>11</version>
+    <version>12-SNAPSHOT</version>
   </parent>
   
   <groupId>org.commonjava.cdi.util</groupId>
@@ -42,6 +42,7 @@
     <javaVersion>1.8</javaVersion>
     <projectOwner>Red Hat, Inc.</projectOwner>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <plugin.jacoco.skip>false</plugin.jacoco.skip>
   </properties>
 
   <dependencyManagement>
