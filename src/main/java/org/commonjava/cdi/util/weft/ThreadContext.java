@@ -64,6 +64,7 @@ public class ThreadContext implements Map<String, Object>
     public static void clearContext()
     {
         THREAD_LOCAL.set( null );
+        MDC.clear();
     }
 
     private ThreadContext(){}
