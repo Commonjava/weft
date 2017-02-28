@@ -54,7 +54,7 @@ public class ThreadContext implements Map<String, Object>
     {
         ThreadContext oldCtx = THREAD_LOCAL.get();
         THREAD_LOCAL.set( ctx );
-        if ( ctx != null )
+        if ( ctx != null && ctx.mdcMap != null  )
         {
             MDC.setContextMap(ctx.mdcMap);
         }
