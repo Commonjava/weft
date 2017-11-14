@@ -15,18 +15,30 @@
  */
 package org.commonjava.cdi.util.weft;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
+ * Effectively a multi-threaded implementation of ThreadLocal, where threads can pass on context to one another starting
+ * with some "top" thread, and traversing to each "child" thread started via a {@link ContextSensitiveExecutorService}
+ * instance, as is injected by Weft's @{@link WeftManaged} annotation.
+ *
+ * This {@link ThreadContext} keeps a count of the number of threads referencing it, and can run finalization logic
+ * when that number hits 0.
+ *
  * Created by jdcasey on 1/3/17.
  */
 public class ThreadContext implements Map<String, Object>
@@ -36,6 +48,10 @@ public class ThreadContext implements Map<String, Object>
     private final Map<String, Object> contextMap = new ConcurrentHashMap<>();
 
     private Map<String, String> mdcMap; // mapped diagnostic context
+
+    private int refs = 1;
+
+    private List<Consumer<ThreadContext>> finalizers = new ArrayList<>();
 
     public static ThreadContext getContext( boolean create )
     {
@@ -52,8 +68,7 @@ public class ThreadContext implements Map<String, Object>
 
     public static ThreadContext setContext( ThreadContext ctx )
     {
-        ThreadContext oldCtx = THREAD_LOCAL.get();
-        THREAD_LOCAL.set( ctx );
+        ThreadContext oldCtx = swapContext( ctx );
         if ( ctx != null && ctx.mdcMap != null  )
         {
             MDC.setContextMap(ctx.mdcMap);
@@ -61,9 +76,76 @@ public class ThreadContext implements Map<String, Object>
         return oldCtx;
     }
 
+    private static ThreadContext swapContext( final ThreadContext ctx )
+    {
+        ThreadContext oldCtx = THREAD_LOCAL.get();
+        if ( oldCtx != null )
+        {
+            Logger logger = LoggerFactory.getLogger( ThreadContext.class );
+            oldCtx.refs--;
+            logger.trace( "context refs: {}", oldCtx.refs );
+            oldCtx.runFinalizersIfDone();
+        }
+
+        THREAD_LOCAL.set( ctx );
+        if ( ctx != null )
+        {
+            ctx.refs++;
+        }
+
+        return oldCtx;
+    }
+
+    /**
+     * Provide some finalizer logic to handle the scenario where the number of "live" threads referencing this context
+     * drops to 0. Before this happens, any contextual information in this ThreadContext may be needed by running threads,
+     * and it's not safe to clean up. However, since the context may contain {@link java.io.Closeable} instances and
+     * the like, it's important to have some point where they will be cleaned up.
+     * @since 1.5
+     * @param finalizer
+     */
+    public synchronized void registerFinalizer( Consumer<ThreadContext> finalizer )
+    {
+        Logger logger = LoggerFactory.getLogger( getClass() );
+        logger.trace( "Registering finalizer: {} on ThreadContext: {}", finalizer, this );
+        if ( !this.finalizers.contains( finalizer ) )
+        {
+            this.finalizers.add( finalizer );
+        }
+    }
+
+    /**
+     * If the thread reference count on this context drops to zero, run any finalization logic that might be registered.
+     */
+    private synchronized void runFinalizersIfDone()
+    {
+        Logger logger = LoggerFactory.getLogger( getClass() );
+        if ( refs < 1 && finalizers != null )
+        {
+            logger.debug( "Running finalizers for ThreadContext: {}", this );
+            finalizers.forEach( c->{
+                if ( c != null )
+                {
+                    logger.debug( "Running finalizer: {} for ThreadContext: {}", c, this );
+
+                    try
+                    {
+                        c.accept( this );
+                    }
+                    catch ( Throwable t )
+                    {
+                        logger.error( "Caught error while running finalizer: " + c + " on ThreadContext: " + this, t );
+                    }
+
+                    logger.trace( "Finalizer: {} done for ThreadContext: {}", c, this );
+                }
+            } );
+        }
+    }
+
     public static void clearContext()
     {
-        THREAD_LOCAL.set( null );
+        swapContext( null );
         MDC.clear();
     }
 
