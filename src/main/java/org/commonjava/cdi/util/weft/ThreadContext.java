@@ -106,10 +106,10 @@ public class ThreadContext implements Map<String, Object>
      */
     public synchronized void registerFinalizer( Consumer<ThreadContext> finalizer )
     {
-        Logger logger = LoggerFactory.getLogger( getClass() );
-        logger.trace( "Registering finalizer: {} on ThreadContext: {}", finalizer, this );
         if ( !this.finalizers.contains( finalizer ) )
         {
+            Logger logger = LoggerFactory.getLogger( getClass() );
+            logger.debug( "Registering finalizer: {} on ThreadContext: {}", finalizer, this );
             this.finalizers.add( finalizer );
         }
     }

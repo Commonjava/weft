@@ -15,9 +15,10 @@
  */
 package org.commonjava.cdi.util.weft;
 
-import org.commonjava.cdi.util.weft.config.DefaultWeftConfig;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,16 @@ public class MDCTest {
         return executor;
     }
 
+    private Weld weld;
+    private WeldContainer container;
+
+    @Before
+    public void init()
+    {
+        weld = new Weld();
+        container = weld.initialize();
+    }
+
     /**
      * Inject an ExecutorService instance using @WeftManaged and then set a value in the MDC in the main test method.
      * Then, we start a new Runnable via the ExecutorService, and verify that the value is available in the MDC map of the Runnable.
@@ -48,8 +59,6 @@ public class MDCTest {
     @Test
     public void run()
     {
-        Weld weld = new Weld();
-        WeldContainer container = weld.initialize();
         MDCTest client = container.instance().select(MDCTest.class).get();
 
         Logger logger = LoggerFactory.getLogger( getClass() );
@@ -63,6 +72,10 @@ public class MDCTest {
         });
     }
 
-    @ApplicationScoped
-    public static class SomeConfig extends DefaultWeftConfig {}
+    @After
+    public void shutdown()
+    {
+        weld.shutdown();
+    }
+
 }
