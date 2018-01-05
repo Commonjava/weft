@@ -71,10 +71,6 @@ public class ContextSensitiveWeakHashMap<K, V>
 
             ctx.registerFinalizer( finalizer ); // register finalizer if not present
         }
-        else
-        {
-            throw new IllegalStateException( "Context Not Found" );
-        }
 
         return ret;
     }
