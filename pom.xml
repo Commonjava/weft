@@ -26,7 +26,7 @@
   
   <groupId>org.commonjava.cdi.util</groupId>
   <artifactId>weft</artifactId>
-  <version>1.6-SNAPSHOT</version>
+  <version>1.6</version>
   
   <name>Weft CDI-Thread/Executor Provider</name>
   <inceptionYear>2013</inceptionYear>
@@ -35,7 +35,7 @@
     <connection>scm:git:https://github.com/Commonjava/weft.git</connection>
     <developerConnection>scm:git:git@github.com:Commonjava/weft.git</developerConnection>
     <url>https://github.com/Commonjava/weft</url>
-    <tag>HEAD</tag>
+    <tag>weft-1.6</tag>
   </scm>
 
   <properties>
