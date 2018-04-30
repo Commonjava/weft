@@ -15,8 +15,6 @@
  */
 package org.commonjava.cdi.util.weft;
 
-import javax.inject.Qualifier;
-
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
