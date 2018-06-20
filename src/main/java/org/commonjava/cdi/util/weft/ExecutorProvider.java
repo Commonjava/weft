@@ -22,17 +22,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.UnsatisfiedResolutionException;
+import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
 import org.commonjava.cdi.util.weft.config.WeftConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 @ApplicationScoped
 public class ExecutorProvider
@@ -44,6 +52,21 @@ public class ExecutorProvider
 
     @Inject
     private WeftConfig config;
+
+    private MetricRegistry metricRegistry;
+
+    @PostConstruct
+    public void init()
+    {
+        try
+        {
+            this.metricRegistry = CDI.current().select( MetricRegistry.class).get();
+        }
+        catch ( UnsatisfiedResolutionException e )
+        {
+            logger.info( e.getMessage() );
+        }
+    }
 
     private SingleThreadedExecutorService singleThreaded = new SingleThreadedExecutorService();
 
@@ -144,6 +167,13 @@ public class ExecutorProvider
                 service = Executors.newCachedThreadPool( fac );
             }
 
+            if ( metricRegistry != null && service instanceof ThreadPoolExecutor )
+            {
+                logger.info( "Register thread pool metrics - {}", name );
+                String prefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
+                registerMetrics( metricRegistry, prefix, (ThreadPoolExecutor) service );
+            }
+
             service = new ContextSensitiveExecutorService( service );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
@@ -154,10 +184,12 @@ public class ExecutorProvider
         return service;
     }
 
-    //    @Produces
-    //    public Executor getExecutor( final InjectionPoint ip )
-    //    {
-    //        return getExecutorService( ip );
-    //    }
+    private void registerMetrics( MetricRegistry registry, String prefix, ThreadPoolExecutor executor )
+    {
+        registry.register( name( prefix, "corePoolSize" ), (Gauge<Integer>) () -> executor.getCorePoolSize() );
+        registry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> executor.getActiveCount() );
+        registry.register( name( prefix, "maxPoolSize" ), (Gauge<Integer>) () -> executor.getMaximumPoolSize() );
+        registry.register( name( prefix, "queueSize" ), (Gauge<Integer>) () -> executor.getQueue().size() );
+    }
 
 }

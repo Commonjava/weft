@@ -41,6 +41,8 @@ public class DefaultWeftConfig
 
     private int defaultPriority = DEFAULT_PRIORITY;
 
+    private String nodePrefix;
+
     public DefaultWeftConfig()
     {
     }
@@ -127,6 +129,18 @@ public class DefaultWeftConfig
     public int getDefaultPriority()
     {
         return defaultPriority;
+    }
+
+    public DefaultWeftConfig configureNodePrefix( String nodePrefix )
+    {
+        this.nodePrefix = nodePrefix;
+        return this;
+    }
+
+    @Override
+    public String getNodePrefix()
+    {
+        return nodePrefix;
     }
 
     @Override
