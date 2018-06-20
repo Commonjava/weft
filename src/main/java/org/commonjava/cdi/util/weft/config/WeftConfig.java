@@ -34,4 +34,5 @@ public interface WeftConfig
 
     int getDefaultPriority();
 
+    String getNodePrefix(); // for cluster env
 }

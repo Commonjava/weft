@@ -43,6 +43,7 @@
     <projectOwner>Red Hat, Inc.</projectOwner>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
+    <metrics.version>4.0.2</metrics.version>
   </properties>
 
   <dependencyManagement>
@@ -54,11 +55,20 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   
   <dependencies>
-    
+    <!-- metrics support-->
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </dependency>
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
