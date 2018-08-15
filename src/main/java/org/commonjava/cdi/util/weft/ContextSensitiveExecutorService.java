@@ -40,6 +40,9 @@ import static com.codahale.metrics.MetricRegistry.name;
  */
 public class ContextSensitiveExecutorService implements ScheduledExecutorService
 {
+    private static final String TIMER = "timer";
+    private static final String METER = "meter";
+
     private ExecutorService delegate;
 
     private MetricRegistry metricRegistry;
@@ -179,7 +182,8 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
         return (Callable<T>) ()->{
             if( metricRegistry != null )
             {
-                Timer.Context context = metricRegistry.timer( name( metricPrefix, "call") ).time();
+                metricRegistry.meter( name( metricPrefix, "call", METER ) ).mark();
+                Timer.Context context = metricRegistry.timer( name( metricPrefix, "call", TIMER ) ).time();
                 try
                 {
                     return callable.call();
@@ -201,7 +205,8 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
         return ()->{
             if( metricRegistry != null )
             {
-                Timer.Context context = metricRegistry.timer( name( metricPrefix, "run") ).time();
+                metricRegistry.meter( name( metricPrefix, "run", METER ) ).mark();
+                Timer.Context context = metricRegistry.timer( name( metricPrefix, "run", TIMER ) ).time();
                 try
                 {
                     runnable.run();
