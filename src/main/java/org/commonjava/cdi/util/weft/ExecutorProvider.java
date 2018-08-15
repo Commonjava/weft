@@ -167,14 +167,14 @@ public class ExecutorProvider
                 service = Executors.newCachedThreadPool( fac );
             }
 
+            String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
             if ( metricRegistry != null && service instanceof ThreadPoolExecutor )
             {
                 logger.info( "Register thread pool metrics - {}", name );
-                String prefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
-                registerMetrics( metricRegistry, prefix, (ThreadPoolExecutor) service );
+                registerMetrics( metricRegistry, metricPrefix, (ThreadPoolExecutor) service );
             }
 
-            service = new ContextSensitiveExecutorService( service );
+            service = new ContextSensitiveExecutorService( service, metricRegistry, metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 

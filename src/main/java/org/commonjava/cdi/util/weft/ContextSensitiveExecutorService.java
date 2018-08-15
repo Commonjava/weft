@@ -15,6 +15,8 @@
  */
 package org.commonjava.cdi.util.weft;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +33,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
 /**
  * Created by jdcasey on 1/3/17.
  */
@@ -38,9 +42,16 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
 {
     private ExecutorService delegate;
 
-    public ContextSensitiveExecutorService( ExecutorService delegate )
+    private MetricRegistry metricRegistry;
+
+    private String metricPrefix;
+
+    public ContextSensitiveExecutorService( ExecutorService delegate, final MetricRegistry metricRegistry,
+                                            final String metricPrefix )
     {
         this.delegate = delegate;
+        this.metricRegistry = metricRegistry;
+        this.metricPrefix = metricPrefix;
     }
 
     @Override
@@ -163,6 +174,50 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
         }
     }
 
+    private <T> Callable<T> timeCallable( Callable<T> callable )
+    {
+        return (Callable<T>) ()->{
+            if( metricRegistry != null )
+            {
+                Timer.Context context = metricRegistry.timer( name( metricPrefix, "call") ).time();
+                try
+                {
+                    return callable.call();
+                }
+                finally
+                {
+                    context.stop();
+                }
+            }
+            else
+            {
+                return callable.call();
+            }
+        };
+    }
+
+    private Runnable timeRunnable( Runnable runnable )
+    {
+        return ()->{
+            if( metricRegistry != null )
+            {
+                Timer.Context context = metricRegistry.timer( name( metricPrefix, "run") ).time();
+                try
+                {
+                    runnable.run();
+                }
+                finally
+                {
+                    context.stop();
+                }
+            }
+            else
+            {
+                runnable.run();
+            }
+        };
+    }
+
     private <T> Collection<Callable<T>> wrapAll( Collection<? extends Callable<T>> collection )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
@@ -170,7 +225,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
-            return (Callable<T>) () -> {
+            return timeCallable((Callable<T>) () -> {
                 try
                 {
                     return callable.call();
@@ -180,17 +235,18 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
                     logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                     ThreadContext.setContext( old );
                 }
-            };
+            });
         } ).collect( Collectors.toList() );
     }
 
     private Runnable wrapRunnable( Runnable runnable )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
-        return ()->{
+        return timeRunnable(()->{
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
+
             try
             {
                 runnable.run();
@@ -200,13 +256,13 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
                 logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
             }
-        };
+        });
     }
 
     private <T> Callable<T> wrapCallable( Callable<T> callable )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
-        return (Callable<T>) ()->{
+        return timeCallable((Callable<T>) ()->{
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
@@ -219,6 +275,6 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
                 logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
             }
-        };
+        });
     }
 }
