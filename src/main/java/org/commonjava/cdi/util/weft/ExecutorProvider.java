@@ -146,7 +146,7 @@ public class ExecutorProvider
         ExecutorService service = services.get( key );
         if ( service == null )
         {
-            final WeftThreadFactory fac = new WeftThreadFactory( name, daemon, priority );
+            final NamedThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
 
             if ( scheduled )
             {
