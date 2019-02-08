@@ -2,6 +2,7 @@ package org.commonjava.cdi.util.weft;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
 import org.commonjava.cdi.util.weft.config.WeftConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +14,9 @@ import javax.enterprise.inject.UnsatisfiedResolutionException;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,14 +35,19 @@ public class WeftPoolBoy
     @Inject
     private WeftConfig config;
 
+    @Inject
     private MetricRegistry metricRegistry;
+
+    @Inject
+    private HealthCheckRegistry healthCheckRegistry;
 
     protected WeftPoolBoy(){}
 
-    public WeftPoolBoy( WeftConfig config, MetricRegistry registry )
+    public WeftPoolBoy( WeftConfig config, MetricRegistry registry, HealthCheckRegistry healthCheckRegistry )
     {
         this.config = config;
         this.metricRegistry = registry;
+        this.healthCheckRegistry = healthCheckRegistry;
     }
 
     @PostConstruct
@@ -59,16 +64,17 @@ public class WeftPoolBoy
     }
 
     private WeftExecutorService singleThreaded =
-            new WeftExecutorService( "singlethreaded", new SingleThreadedExecutorService(), 1, 10f, null, null );
+            new WeftExecutorService( "singlethreaded", (ThreadPoolExecutor) Executors.newFixedThreadPool( 1 ), 1, 10f,
+                                     null, null );
 
     public WeftExecutorService getPool( final String key )
     {
         return pools.get( key );
     }
 
-    public WeftExecutorService addPool( final String key, final WeftExecutorService pool )
+    private WeftExecutorService addPool( final WeftExecutorService pool )
     {
-        return pools.put( key, pool );
+        return pools.put( pool.getName(), pool );
     }
 
     @PreDestroy
@@ -133,7 +139,7 @@ public class WeftPoolBoy
         final String key = name + ":" + ( scheduled ? "scheduled" : "" );
         WeftExecutorService existing = getPool( key );
         WeftExecutorService service = existing;
-        ExecutorService svc = null;
+        ThreadPoolExecutor svc = null;
         if ( service == null )
         {
             final NamedThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
@@ -146,48 +152,64 @@ public class WeftPoolBoy
                     threadCount = config.getDefaultThreads();
                 }
 
-                svc = Executors.newScheduledThreadPool( threadCount, fac );
+                svc = (ThreadPoolExecutor) Executors.newScheduledThreadPool( threadCount, fac );
             }
             else if ( threadCount > 0 )
             {
-                svc = Executors.newFixedThreadPool( threadCount, fac );
+                svc = (ThreadPoolExecutor) Executors.newFixedThreadPool( threadCount, fac );
             }
             else
             {
-                svc = Executors.newCachedThreadPool( fac );
+                svc = (ThreadPoolExecutor) Executors.newCachedThreadPool( fac );
             }
 
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
-            if ( metricRegistry != null && svc instanceof ThreadPoolExecutor )
-            {
-                logger.info( "Register thread pool metrics - {}", name );
-                registerMetrics( metricRegistry, metricPrefix, (ThreadPoolExecutor) svc );
-            }
 
             service = new WeftExecutorService( name, svc, threadCount, maxLoadFactor, metricRegistry, metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
-            if ( existing == null )
-            {
-                addPool( key, service );
-            }
+            addPool( service );
+            registerMetrics( metricPrefix, service );
         }
 
         return service;
     }
 
 
-    private void registerMetrics( MetricRegistry registry, String prefix, ThreadPoolExecutor executor )
+    private void registerMetrics( String prefix, WeftExecutorService pool )
     {
-        registry.register( name( prefix, "corePoolSize" ), (Gauge<Integer>) () -> executor.getCorePoolSize() );
-        registry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> executor.getActiveCount() );
-        registry.register( name( prefix, "maxPoolSize" ), (Gauge<Integer>) () -> executor.getMaximumPoolSize() );
-        registry.register( name( prefix, "queueSize" ), (Gauge<Integer>) () -> executor.getQueue().size() );
+        if ( metricRegistry != null )
+        {
+            metricRegistry.register( name( prefix, "corePoolSize" ), (Gauge<Integer>) () -> pool.getCorePoolSize() );
+            metricRegistry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> pool.getActiveCount() );
+            metricRegistry.register( name( prefix, "maxPoolSize" ), (Gauge<Integer>) () -> pool.getMaximumPoolSize() );
+            metricRegistry.register( name( prefix, "queueSize" ), (Gauge<Long>) () -> pool.getTaskCount() );
+        }
+
+        if ( healthCheckRegistry != null )
+        {
+            healthCheckRegistry.register( pool.getName(), new WeftPoolHealthCheck( pool ) );
+        }
     }
 
-    public Set<WeftExecutorService> getPools()
+    public Map<String, WeftExecutorService> getPools()
     {
-        return Collections.unmodifiableSet( new HashSet<>( pools.values() ) );
+        Map<String, WeftExecutorService> result = new HashMap<>( pools );
+
+        logger.debug( "Getting pools. {} already initialized.", pools.size() );
+
+        config.getKnownPools().forEach( name->{
+            if ( !result.containsKey( name ) )
+            {
+                logger.debug( "Adding known-but-uninitialized pool: {}", name );
+                result.put( name, null );
+            }
+        } );
+
+        logger.debug( "Returning total of {} pools with {} uninitialized (null).", result.size(),
+                      ( result.size() - pools.size() ) );
+
+        return Collections.unmodifiableMap( result );
     }
 }

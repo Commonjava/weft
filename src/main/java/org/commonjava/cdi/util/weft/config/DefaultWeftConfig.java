@@ -15,8 +15,11 @@
  */
 package org.commonjava.cdi.util.weft.config;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class DefaultWeftConfig
     implements WeftConfig
@@ -48,6 +51,8 @@ public class DefaultWeftConfig
     private float defaultMaxLoadFactor = DEFAULT_MAX_LOAD_FACTOR;
 
     private String nodePrefix;
+
+    private Set<String> knownPools = new HashSet<>();
 
     public DefaultWeftConfig()
     {
@@ -90,6 +95,8 @@ public class DefaultWeftConfig
 
     public DefaultWeftConfig configurePool( final String name, final int threads, final int priority, final float maxLoadFactor )
     {
+        knownPools.add( name );
+
         config.put( name + THREADS_SUFFIX, threads );
         config.put( name + PRIORITY_SUFFIX, priority );
         if ( maxLoadFactor > 0f )
@@ -102,6 +109,8 @@ public class DefaultWeftConfig
 
     public DefaultWeftConfig configureThreads( final String name, final int threads )
     {
+        knownPools.add( name );
+
         config.put( name + THREADS_SUFFIX, threads );
 
         return this;
@@ -109,6 +118,8 @@ public class DefaultWeftConfig
 
     public DefaultWeftConfig configurePriority( final String name, final int priority )
     {
+        knownPools.add( name );
+
         config.put( name + PRIORITY_SUFFIX, priority );
 
         return this;
@@ -116,12 +127,16 @@ public class DefaultWeftConfig
 
     public DefaultWeftConfig configureMaxLoadFactor( final String name, final float maxLoadFactor )
     {
+        knownPools.add( name );
+
         maxLoadFactors.put( name, maxLoadFactor );
         return this;
     }
 
     public DefaultWeftConfig configureEnabled( final String name, final boolean enabled )
     {
+        knownPools.add( name );
+
         enabledPools.put( name, enabled );
         return this;
     }
@@ -212,6 +227,12 @@ public class DefaultWeftConfig
     public float getMaxLoadFactor( final String poolName, final Float defaultMax )
     {
         return getWithDefaultAndFailover( poolName, defaultMax, getDefaultMaxLoadFactor() );
+    }
+
+    @Override
+    public Set<String> getKnownPools()
+    {
+        return Collections.unmodifiableSet( knownPools );
     }
 
     private int getWithDefaultAndFailover( final String poolName, final String suffix, final Integer defaultValue, final int failover )

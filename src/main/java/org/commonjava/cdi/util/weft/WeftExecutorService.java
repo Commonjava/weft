@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,7 +48,7 @@ public class WeftExecutorService
 
     private String name;
 
-    private ExecutorService delegate;
+    private ThreadPoolExecutor delegate;
 
     private Integer threadCount;
 
@@ -59,7 +60,7 @@ public class WeftExecutorService
 
     private final AtomicInteger load = new AtomicInteger( 0 );
 
-    public WeftExecutorService( final String name, ExecutorService delegate, final Integer threadCount, final Float maxLoadFactor, final MetricRegistry metricRegistry,
+    public WeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount, final Float maxLoadFactor, final MetricRegistry metricRegistry,
                                 final String metricPrefix )
     {
         this.name = name;
@@ -200,6 +201,36 @@ public class WeftExecutorService
     public ScheduledFuture<?> scheduleWithFixedDelay( Runnable runnable, long l, long l1, TimeUnit timeUnit )
     {
         return asScheduled( ( d ) -> d.scheduleWithFixedDelay( wrapRunnable( runnable ), l, l1, timeUnit ) );
+    }
+
+    public int getCorePoolSize()
+    {
+        return delegate.getCorePoolSize();
+    }
+
+    public int getMaximumPoolSize()
+    {
+        return delegate.getMaximumPoolSize();
+    }
+
+    public int getPoolSize()
+    {
+        return delegate.getPoolSize();
+    }
+
+    public int getActiveCount()
+    {
+        return delegate.getActiveCount();
+    }
+
+    public int getLargestPoolSize()
+    {
+        return delegate.getLargestPoolSize();
+    }
+
+    public long getTaskCount()
+    {
+        return delegate.getTaskCount();
     }
 
     private <T> ScheduledFuture<T> asScheduled( Function<ScheduledExecutorService, ScheduledFuture<T>> consumer )

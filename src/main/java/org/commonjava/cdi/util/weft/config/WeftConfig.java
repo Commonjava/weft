@@ -15,6 +15,8 @@
  */
 package org.commonjava.cdi.util.weft.config;
 
+import java.util.Set;
+
 public interface WeftConfig
 {
 
@@ -41,4 +43,6 @@ public interface WeftConfig
     float getDefaultMaxLoadFactor();
 
     String getNodePrefix(); // for cluster env
+
+    Set<String> getKnownPools();
 }
