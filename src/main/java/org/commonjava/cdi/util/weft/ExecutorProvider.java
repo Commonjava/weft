@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -147,7 +146,7 @@ public class ExecutorProvider
         ExecutorService service = services.get( key );
         if ( service == null )
         {
-            final ThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
+            final WeftThreadFactory fac = new WeftThreadFactory( name, daemon, priority );
 
             if ( scheduled )
             {
@@ -174,7 +173,7 @@ public class ExecutorProvider
                 registerMetrics( metricRegistry, metricPrefix, (ThreadPoolExecutor) service );
             }
 
-            service = new ContextSensitiveExecutorService( service, metricRegistry, metricPrefix );
+            service = new WeftExecutorService( service, threadCount, metricRegistry, metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 

@@ -30,6 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,23 +39,39 @@ import static com.codahale.metrics.MetricRegistry.name;
 /**
  * Created by jdcasey on 1/3/17.
  */
-public class ContextSensitiveExecutorService implements ScheduledExecutorService
+public class WeftExecutorService
+        implements ScheduledExecutorService
 {
     private static final String TIMER = "timer";
     private static final String METER = "meter";
 
     private ExecutorService delegate;
 
+    private Integer threadCount;
+
     private MetricRegistry metricRegistry;
 
     private String metricPrefix;
 
-    public ContextSensitiveExecutorService( ExecutorService delegate, final MetricRegistry metricRegistry,
-                                            final String metricPrefix )
+    private final AtomicInteger load = new AtomicInteger( 0 );
+
+    public WeftExecutorService( ExecutorService delegate, final Integer threadCount, final MetricRegistry metricRegistry,
+                                final String metricPrefix )
     {
         this.delegate = delegate;
+        this.threadCount = threadCount;
         this.metricRegistry = metricRegistry;
         this.metricPrefix = metricPrefix;
+    }
+
+    public int getCurrentLoad()
+    {
+        return load.get();
+    }
+
+    public Integer getThreadCount()
+    {
+        return threadCount;
     }
 
     @Override
@@ -231,6 +248,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
             return timeCallable((Callable<T>) () -> {
+                load.incrementAndGet();
                 try
                 {
                     return callable.call();
@@ -239,6 +257,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
                 {
                     logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                     ThreadContext.setContext( old );
+                    load.decrementAndGet();
                 }
             });
         } ).collect( Collectors.toList() );
@@ -248,6 +267,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
     {
         ThreadContext ctx = ThreadContext.getContext( false );
         return timeRunnable(()->{
+            load.incrementAndGet();
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
@@ -260,6 +280,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
             {
                 logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
+                load.decrementAndGet();
             }
         });
     }
@@ -268,6 +289,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
     {
         ThreadContext ctx = ThreadContext.getContext( false );
         return timeCallable((Callable<T>) ()->{
+            load.incrementAndGet();
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
@@ -279,6 +301,7 @@ public class ContextSensitiveExecutorService implements ScheduledExecutorService
             {
                 logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
+                load.decrementAndGet();
             }
         });
     }
