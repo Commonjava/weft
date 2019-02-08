@@ -93,14 +93,18 @@ public class Locker<K>
             Boolean locked = false;
             try
             {
+                logger.debug( "Locking on: {} with timeout seconds: {}", key, timeoutSeconds );
                 locked = lock.tryLock( timeoutSeconds, TimeUnit.SECONDS );
                 if ( locked )
                 {
+                    logger.debug( "Applying function locked with: {}", key );
                     return function.apply( key );
                 }
                 else
                 {
+                    logger.debug( "Lock failed for key: {}", key );
                     retry = lockFailedFunction.apply( key, lock );
+                    logger.debug( "Retry lock on: {}? {}", key, retry );
                 }
             }
             catch ( InterruptedException e )
@@ -109,14 +113,17 @@ public class Locker<K>
             }
             finally
             {
+                logger.debug( "Done, checking whether unlock needed for: {}", key );
                 if ( locked )
                 {
+                    logger.debug( "Unlocking key: {}", key );
                     lock.unlock();
                 }
             }
         }
         while ( retry == Boolean.TRUE );
 
+        logger.debug( "No retries, return null for locked operation on key: {}", key );
         return null;
     }
 

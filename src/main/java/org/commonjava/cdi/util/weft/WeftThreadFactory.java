@@ -17,7 +17,7 @@ package org.commonjava.cdi.util.weft;
 
 import java.util.concurrent.ThreadFactory;
 
-public class NamedThreadFactory
+public class WeftThreadFactory
     implements ThreadFactory
 {
 
@@ -31,7 +31,7 @@ public class NamedThreadFactory
 
     private final int priority;
 
-    public NamedThreadFactory( final String name, final boolean daemon, final int priority )
+    public WeftThreadFactory( final String name, final boolean daemon, final int priority )
     {
         this.ccl = Thread.currentThread()
                          .getContextClassLoader();
@@ -51,5 +51,4 @@ public class NamedThreadFactory
 
         return t;
     }
-
 }

@@ -32,7 +32,7 @@ import java.util.function.Function;
 
 /**
  * Effectively a multi-threaded implementation of ThreadLocal, where threads can pass on context to one another starting
- * with some "top" thread, and traversing to each "child" thread started via a {@link ContextSensitiveExecutorService}
+ * with some "top" thread, and traversing to each "child" thread started via a {@link WeftExecutorService}
  * instance, as is injected by Weft's @{@link WeftManaged} annotation.
  *
  * This {@link ThreadContext} keeps a count of the number of threads referencing it, and can run finalization logic
