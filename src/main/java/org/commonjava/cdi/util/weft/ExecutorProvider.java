@@ -45,7 +45,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 public class ExecutorProvider
 {
 
-    private final Map<String, ExecutorService> services = new ConcurrentHashMap<String, ExecutorService>();
+    private final Map<String, WeftExecutorService> services = new ConcurrentHashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger( getClass() );
 
@@ -67,12 +67,13 @@ public class ExecutorProvider
         }
     }
 
-    private SingleThreadedExecutorService singleThreaded = new SingleThreadedExecutorService();
+    private WeftExecutorService singleThreaded =
+            new WeftExecutorService( new SingleThreadedExecutorService(), 1, null, null );
 
     @PreDestroy
     public void shutdown()
     {
-        for ( final Map.Entry<String, ExecutorService> entry : services.entrySet() )
+        for ( final Map.Entry<String, WeftExecutorService> entry : services.entrySet() )
         {
             final ExecutorService service = entry.getValue();
 
@@ -101,19 +102,19 @@ public class ExecutorProvider
 
     @Produces
     @WeftManaged
-    public ExecutorService getExecutorService( final InjectionPoint ip )
+    public WeftExecutorService getExecutorService( final InjectionPoint ip )
     {
         return getExec( ip, false );
     }
 
     @Produces
     @WeftScheduledExecutor
-    public ScheduledExecutorService getScheduledExecutorService( final InjectionPoint ip )
+    public WeftExecutorService getScheduledExecutorService( final InjectionPoint ip )
     {
-        return (ScheduledExecutorService) getExec( ip, true );
+        return getExec( ip, true );
     }
 
-    private ExecutorService getExec( final InjectionPoint ip, final boolean scheduled )
+    private WeftExecutorService getExec( final InjectionPoint ip, final boolean scheduled )
     {
         final ExecutorConfig ec = ip.getAnnotated()
                                     .getAnnotation( ExecutorConfig.class );
@@ -143,7 +144,8 @@ public class ExecutorProvider
         priority = config.getPriority( name, priority );
 
         final String key = name + ":" + ( scheduled ? "scheduled" : "" );
-        ExecutorService service = services.get( key );
+        WeftExecutorService service = services.get( key );
+        ExecutorService svc = null;
         if ( service == null )
         {
             final NamedThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
@@ -155,25 +157,25 @@ public class ExecutorProvider
                     throw new RuntimeException( ip + " must specify a non-zero number for threads parameter in @ExecutorConfig." );
                 }
 
-                service = Executors.newScheduledThreadPool( threadCount, fac );
+                svc = Executors.newScheduledThreadPool( threadCount, fac );
             }
             else if ( threadCount > 0 )
             {
-                service = Executors.newFixedThreadPool( threadCount, fac );
+                svc = Executors.newFixedThreadPool( threadCount, fac );
             }
             else
             {
-                service = Executors.newCachedThreadPool( fac );
+                svc = Executors.newCachedThreadPool( fac );
             }
 
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
-            if ( metricRegistry != null && service instanceof ThreadPoolExecutor )
+            if ( metricRegistry != null && svc instanceof ThreadPoolExecutor )
             {
                 logger.info( "Register thread pool metrics - {}", name );
-                registerMetrics( metricRegistry, metricPrefix, (ThreadPoolExecutor) service );
+                registerMetrics( metricRegistry, metricPrefix, (ThreadPoolExecutor) svc );
             }
 
-            service = new WeftExecutorService( service, threadCount, metricRegistry, metricPrefix );
+            service = new WeftExecutorService( svc, threadCount, metricRegistry, metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
