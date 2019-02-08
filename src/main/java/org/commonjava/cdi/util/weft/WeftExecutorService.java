@@ -45,9 +45,13 @@ public class WeftExecutorService
     private static final String TIMER = "timer";
     private static final String METER = "meter";
 
+    private String name;
+
     private ExecutorService delegate;
 
     private Integer threadCount;
+
+    private Float maxLoadFactor;
 
     private MetricRegistry metricRegistry;
 
@@ -55,13 +59,30 @@ public class WeftExecutorService
 
     private final AtomicInteger load = new AtomicInteger( 0 );
 
-    public WeftExecutorService( ExecutorService delegate, final Integer threadCount, final MetricRegistry metricRegistry,
+    public WeftExecutorService( final String name, ExecutorService delegate, final Integer threadCount, final Float maxLoadFactor, final MetricRegistry metricRegistry,
                                 final String metricPrefix )
     {
+        this.name = name;
         this.delegate = delegate;
         this.threadCount = threadCount;
+        this.maxLoadFactor = maxLoadFactor;
         this.metricRegistry = metricRegistry;
         this.metricPrefix = metricPrefix;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public boolean isHealthy()
+    {
+        return getLoadFactor() < maxLoadFactor;
+    }
+
+    public float getLoadFactor()
+    {
+        return getCurrentLoad() / getThreadCount();
     }
 
     public int getCurrentLoad()
@@ -305,4 +326,5 @@ public class WeftExecutorService
             }
         });
     }
+
 }
