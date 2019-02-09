@@ -15,8 +15,11 @@
  */
 package org.commonjava.cdi.util.weft.config;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class DefaultWeftConfig
     implements WeftConfig
@@ -31,30 +34,40 @@ public class DefaultWeftConfig
 
     private static final int DEFAULT_PRIORITY = 8;
 
+    private static final float DEFAULT_MAX_LOAD_FACTOR = 10.0f;
+
     private boolean enabled = true;
 
     private final Map<String, Boolean> enabledPools = new HashMap<>();
 
     private final Map<String, Integer> config = new HashMap<String, Integer>();
 
+    private final Map<String, Float> maxLoadFactors = new HashMap<>();
+
     private int defaultThreads = DEFAULT_THREADS;
 
     private int defaultPriority = DEFAULT_PRIORITY;
 
+    private float defaultMaxLoadFactor = DEFAULT_MAX_LOAD_FACTOR;
+
     private String nodePrefix;
+
+    private Set<String> knownPools = new HashSet<>();
 
     public DefaultWeftConfig()
     {
     }
 
-    public DefaultWeftConfig( final Map<String, Integer> config )
+    public DefaultWeftConfig( final Map<String, Integer> config, final Map<String, Float> maxLoadFactors )
     {
         this.config.putAll( config );
+        this.maxLoadFactors.putAll( maxLoadFactors );
     }
 
     public DefaultWeftConfig( final DefaultWeftConfig config )
     {
         this.config.putAll( config.config );
+        this.maxLoadFactors.putAll( config.maxLoadFactors );
     }
 
     public DefaultWeftConfig configureDefaultThreads( final int defaultThreads )
@@ -69,16 +82,35 @@ public class DefaultWeftConfig
         return this;
     }
 
+    public DefaultWeftConfig configureDefaultMaxLoadFactor( final float maxLoadFactor )
+    {
+        this.defaultMaxLoadFactor = maxLoadFactor;
+        return this;
+    }
+
     public DefaultWeftConfig configurePool( final String name, final int threads, final int priority )
     {
+        return configurePool( name, threads, priority, 0f );
+    }
+
+    public DefaultWeftConfig configurePool( final String name, final int threads, final int priority, final float maxLoadFactor )
+    {
+        knownPools.add( name );
+
         config.put( name + THREADS_SUFFIX, threads );
         config.put( name + PRIORITY_SUFFIX, priority );
+        if ( maxLoadFactor > 0f )
+        {
+            maxLoadFactors.put( name, maxLoadFactor );
+        }
 
         return this;
     }
 
     public DefaultWeftConfig configureThreads( final String name, final int threads )
     {
+        knownPools.add( name );
+
         config.put( name + THREADS_SUFFIX, threads );
 
         return this;
@@ -86,13 +118,25 @@ public class DefaultWeftConfig
 
     public DefaultWeftConfig configurePriority( final String name, final int priority )
     {
+        knownPools.add( name );
+
         config.put( name + PRIORITY_SUFFIX, priority );
 
         return this;
     }
 
+    public DefaultWeftConfig configureMaxLoadFactor( final String name, final float maxLoadFactor )
+    {
+        knownPools.add( name );
+
+        maxLoadFactors.put( name, maxLoadFactor );
+        return this;
+    }
+
     public DefaultWeftConfig configureEnabled( final String name, final boolean enabled )
     {
+        knownPools.add( name );
+
         enabledPools.put( name, enabled );
         return this;
     }
@@ -131,6 +175,12 @@ public class DefaultWeftConfig
         return defaultPriority;
     }
 
+    @Override
+    public float getDefaultMaxLoadFactor()
+    {
+        return defaultMaxLoadFactor;
+    }
+
     public DefaultWeftConfig configureNodePrefix( String nodePrefix )
     {
         this.nodePrefix = nodePrefix;
@@ -158,7 +208,13 @@ public class DefaultWeftConfig
     @Override
     public int getPriority( final String poolName )
     {
-        return getWithDefaultAndFailover( poolName, PRIORITY_SUFFIX, null, getDefaultPriority() );
+        return getWithDefaultAndFailover( poolName, PRIORITY_SUFFIX, 1, getDefaultPriority() );
+    }
+
+    @Override
+    public float getMaxLoadFactor( final String poolName )
+    {
+        return getWithDefaultAndFailover( poolName, 10f, getDefaultMaxLoadFactor() );
     }
 
     @Override
@@ -167,9 +223,32 @@ public class DefaultWeftConfig
         return getWithDefaultAndFailover( poolName, PRIORITY_SUFFIX, defaultValue, getDefaultPriority() );
     }
 
+    @Override
+    public float getMaxLoadFactor( final String poolName, final Float defaultMax )
+    {
+        return getWithDefaultAndFailover( poolName, defaultMax, getDefaultMaxLoadFactor() );
+    }
+
+    @Override
+    public Set<String> getKnownPools()
+    {
+        return Collections.unmodifiableSet( knownPools );
+    }
+
     private int getWithDefaultAndFailover( final String poolName, final String suffix, final Integer defaultValue, final int failover )
     {
         final Integer v = config.get( poolName + suffix );
+        if ( v == null )
+        {
+            return defaultValue == null  || defaultValue == 0 ? failover : defaultValue;
+        }
+
+        return v;
+    }
+
+    private float getWithDefaultAndFailover( final String poolName, final Float defaultValue, final float failover )
+    {
+        final Float v = maxLoadFactors.get( poolName );
         if ( v == null )
         {
             return defaultValue == null  || defaultValue == 0 ? failover : defaultValue;

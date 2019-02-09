@@ -44,151 +44,31 @@ import static com.codahale.metrics.MetricRegistry.name;
 @ApplicationScoped
 public class ExecutorProvider
 {
-
-    private final Map<String, ExecutorService> services = new ConcurrentHashMap<String, ExecutorService>();
-
     private final Logger logger = LoggerFactory.getLogger( getClass() );
 
     @Inject
-    private WeftConfig config;
-
-    private MetricRegistry metricRegistry;
-
-    @PostConstruct
-    public void init()
-    {
-        try
-        {
-            this.metricRegistry = CDI.current().select( MetricRegistry.class).get();
-        }
-        catch ( UnsatisfiedResolutionException e )
-        {
-            logger.info( e.getMessage() );
-        }
-    }
-
-    private SingleThreadedExecutorService singleThreaded = new SingleThreadedExecutorService();
-
-    @PreDestroy
-    public void shutdown()
-    {
-        for ( final Map.Entry<String, ExecutorService> entry : services.entrySet() )
-        {
-            final ExecutorService service = entry.getValue();
-
-            service.shutdown();
-            try
-            {
-                service.awaitTermination( 1000, TimeUnit.MILLISECONDS );
-
-                if ( !service.isTerminated() )
-                {
-                    final List<Runnable> running = service.shutdownNow();
-                    if ( !running.isEmpty() )
-                    {
-                        logger.warn( "{} tasks remain for executor: {}", running.size(), entry.getKey() );
-                    }
-                }
-            }
-            catch ( final InterruptedException e )
-            {
-                Thread.currentThread()
-                      .interrupt();
-                return;
-            }
-        }
-    }
+    private WeftPoolBoy poolBoy = new WeftPoolBoy();
 
     @Produces
     @WeftManaged
-    public ExecutorService getExecutorService( final InjectionPoint ip )
+    public WeftExecutorService getExecutorService( final InjectionPoint ip )
     {
         return getExec( ip, false );
     }
 
     @Produces
     @WeftScheduledExecutor
-    public ScheduledExecutorService getScheduledExecutorService( final InjectionPoint ip )
+    public WeftExecutorService getScheduledExecutorService( final InjectionPoint ip )
     {
-        return (ScheduledExecutorService) getExec( ip, true );
+        return getExec( ip, true );
     }
 
-    private ExecutorService getExec( final InjectionPoint ip, final boolean scheduled )
+    private WeftExecutorService getExec( final InjectionPoint ip, final boolean scheduled )
     {
         final ExecutorConfig ec = ip.getAnnotated()
                                     .getAnnotation( ExecutorConfig.class );
 
-        Integer threadCount = 0;
-        Integer priority = null;
-
-        boolean daemon = true;
-
-        // TODO: This may cause counter-intuitive sharing of thread pools for un-annotated injections...
-        String name = "weft-unannotated";
-
-        if ( ec != null )
-        {
-            threadCount = ec.threads();
-            name = ec.named();
-            priority = ec.priority();
-            daemon = ec.daemon();
-        }
-
-        if ( !config.isEnabled() || !config.isEnabled( name ) )
-        {
-            return singleThreaded;
-        }
-
-        threadCount = config.getThreads( name, threadCount );
-        priority = config.getPriority( name, priority );
-
-        final String key = name + ":" + ( scheduled ? "scheduled" : "" );
-        ExecutorService service = services.get( key );
-        if ( service == null )
-        {
-            final NamedThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
-
-            if ( scheduled )
-            {
-                if ( threadCount < 1 )
-                {
-                    throw new RuntimeException( ip + " must specify a non-zero number for threads parameter in @ExecutorConfig." );
-                }
-
-                service = Executors.newScheduledThreadPool( threadCount, fac );
-            }
-            else if ( threadCount > 0 )
-            {
-                service = Executors.newFixedThreadPool( threadCount, fac );
-            }
-            else
-            {
-                service = Executors.newCachedThreadPool( fac );
-            }
-
-            String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
-            if ( metricRegistry != null && service instanceof ThreadPoolExecutor )
-            {
-                logger.info( "Register thread pool metrics - {}", name );
-                registerMetrics( metricRegistry, metricPrefix, (ThreadPoolExecutor) service );
-            }
-
-            service = new WeftExecutorService( service, threadCount, metricRegistry, metricPrefix );
-
-            // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
-
-            services.put( key, service );
-        }
-
-        return service;
-    }
-
-    private void registerMetrics( MetricRegistry registry, String prefix, ThreadPoolExecutor executor )
-    {
-        registry.register( name( prefix, "corePoolSize" ), (Gauge<Integer>) () -> executor.getCorePoolSize() );
-        registry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> executor.getActiveCount() );
-        registry.register( name( prefix, "maxPoolSize" ), (Gauge<Integer>) () -> executor.getMaximumPoolSize() );
-        registry.register( name( prefix, "queueSize" ), (Gauge<Integer>) () -> executor.getQueue().size() );
+        return poolBoy.getPool( ec, scheduled );
     }
 
 }

@@ -33,6 +33,8 @@ public @interface ExecutorConfig
 
     int priority() default 3;
 
+    float maxLoadFactor() default 10;
+
     String named();
 
     boolean daemon() default true;

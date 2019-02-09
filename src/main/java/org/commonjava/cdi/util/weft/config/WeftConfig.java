@@ -15,6 +15,8 @@
  */
 package org.commonjava.cdi.util.weft.config;
 
+import java.util.Set;
+
 public interface WeftConfig
 {
 
@@ -26,13 +28,21 @@ public interface WeftConfig
 
     int getPriority( String poolName );
 
+    float getMaxLoadFactor( String poolName );
+
     int getThreads( String poolName, Integer defaultThreads );
 
     int getPriority( String poolName, Integer defaultPriority );
+
+    float getMaxLoadFactor( String poolName, Float defaultMax );
 
     int getDefaultThreads();
 
     int getDefaultPriority();
 
+    float getDefaultMaxLoadFactor();
+
     String getNodePrefix(); // for cluster env
+
+    Set<String> getKnownPools();
 }
