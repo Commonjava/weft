@@ -81,7 +81,7 @@ public class WeftExecutorService
         return getLoadFactor() < maxLoadFactor;
     }
 
-    public float getLoadFactor()
+    public double getLoadFactor()
     {
         return getCurrentLoad() / getThreadCount();
     }

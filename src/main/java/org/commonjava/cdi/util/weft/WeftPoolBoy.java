@@ -107,7 +107,7 @@ public class WeftPoolBoy
         }
     }
 
-    public WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
+    public synchronized WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
     {
         Integer threadCount = 0;
         Integer priority = null;
@@ -137,8 +137,7 @@ public class WeftPoolBoy
         maxLoadFactor = config.getMaxLoadFactor( name, maxLoadFactor );
 
         final String key = name + ":" + ( scheduled ? "scheduled" : "" );
-        WeftExecutorService existing = getPool( key );
-        WeftExecutorService service = existing;
+        WeftExecutorService service = getPool( key );
         ThreadPoolExecutor svc = null;
         if ( service == null )
         {
@@ -165,7 +164,7 @@ public class WeftPoolBoy
 
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
 
-            service = new WeftExecutorService( name, svc, threadCount, maxLoadFactor, metricRegistry, metricPrefix );
+            service = new WeftExecutorService( key, svc, threadCount, maxLoadFactor, metricRegistry, metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 

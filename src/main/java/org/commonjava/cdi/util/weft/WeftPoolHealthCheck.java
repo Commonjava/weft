@@ -43,7 +43,7 @@ public class WeftPoolHealthCheck
         {
             builder = builder.withDetail( POOL_SIZE, 0 )
                              .withDetail( CURRENT_LOAD, 0 )
-                             .withDetail( LOAD_FACTOR, 0 );
+                             .withDetail( LOAD_FACTOR, 0.0 );
         }
 
         return builder.build();
