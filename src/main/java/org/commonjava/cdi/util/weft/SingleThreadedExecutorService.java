@@ -20,23 +20,37 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Dummy {@link ExecutorService} that forces everything to be read in the current thread. Used for when weft is disabled.
  * Created by jdcasey on 8/25/16.
  */
 public class SingleThreadedExecutorService
-        implements ExecutorService
+    implements WeftExecutorService
 {
     private boolean shutdown;
 
     private Random random = new Random();
+
+    private String name;
+
+    private AtomicBoolean isRunning = new AtomicBoolean( false );
+
+    public SingleThreadedExecutorService( final String name )
+    {
+        this.name = name;
+    }
 
     @Override
     public synchronized void shutdown()
@@ -145,6 +159,60 @@ public class SingleThreadedExecutorService
     public void execute( Runnable runnable )
     {
         runnable.run();
+    }
+
+    @Override
+    public String getName()
+    {
+        return name;
+    }
+
+    @Override
+    public boolean isHealthy()
+    {
+        return true;
+    }
+
+    @Override
+    public double getLoadFactor()
+    {
+        return isRunning.get() ? 1 : 0;
+    }
+
+    @Override
+    public int getCurrentLoad()
+    {
+        return isRunning.get() ? 1 : 0;
+    }
+
+    @Override
+    public Integer getThreadCount()
+    {
+        return 1;
+    }
+
+    @Override
+    public int getCorePoolSize()
+    {
+        return 1;
+    }
+
+    @Override
+    public int getMaximumPoolSize()
+    {
+        return 1;
+    }
+
+    @Override
+    public int getActiveCount()
+    {
+        return isRunning.get() ? 1 : 0;
+    }
+
+    @Override
+    public long getTaskCount()
+    {
+        return isRunning.get() ? 1 : 0;
     }
 
     private final class RunAndReturn<T> implements Callable<T>
