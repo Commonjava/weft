@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.UnsatisfiedResolutionException;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
@@ -36,9 +37,13 @@ public class WeftPoolBoy
     private WeftConfig config;
 
     @Inject
+    private Instance<MetricRegistry> metricRegistryInstance;
+
     private MetricRegistry metricRegistry;
 
     @Inject
+    private Instance<HealthCheckRegistry> healthCheckRegistryInstance;
+
     private HealthCheckRegistry healthCheckRegistry;
 
     protected WeftPoolBoy(){}
@@ -53,13 +58,14 @@ public class WeftPoolBoy
     @PostConstruct
     public void init()
     {
-        try
+        if ( !metricRegistryInstance.isUnsatisfied() )
         {
-            this.metricRegistry = CDI.current().select( MetricRegistry.class).get();
+            this.metricRegistry = metricRegistryInstance.get();
         }
-        catch ( UnsatisfiedResolutionException e )
+
+        if ( !healthCheckRegistryInstance.isUnsatisfied() )
         {
-            logger.info( e.getMessage() );
+            this.healthCheckRegistry = healthCheckRegistryInstance.get();
         }
     }
 
