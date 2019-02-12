@@ -63,10 +63,6 @@ public class WeftPoolBoy
         }
     }
 
-    private WeftExecutorService singleThreaded =
-            new WeftExecutorService( "singlethreaded", (ThreadPoolExecutor) Executors.newFixedThreadPool( 1 ), 1, 10f,
-                                     null, null );
-
     public WeftExecutorService getPool( final String key )
     {
         return pools.get( key );
@@ -127,17 +123,18 @@ public class WeftPoolBoy
             daemon = ec.daemon();
         }
 
-        if ( !config.isEnabled() || !config.isEnabled( name ) )
+        final String key = name + ":" + ( scheduled ? "scheduled" : "" );
+        WeftExecutorService service = getPool( key );
+        if ( service == null && ( !config.isEnabled() || !config.isEnabled( name ) ) )
         {
-            return singleThreaded;
+            service = new SingleThreadedExecutorService( key );
+            addPool( service );
         }
 
         threadCount = config.getThreads( name, threadCount );
         priority = config.getPriority( name, priority );
         maxLoadFactor = config.getMaxLoadFactor( name, maxLoadFactor );
 
-        final String key = name + ":" + ( scheduled ? "scheduled" : "" );
-        WeftExecutorService service = getPool( key );
         ThreadPoolExecutor svc = null;
         if ( service == null )
         {
@@ -164,7 +161,7 @@ public class WeftPoolBoy
 
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
 
-            service = new WeftExecutorService( key, svc, threadCount, maxLoadFactor, metricRegistry, metricPrefix );
+            service = new PoolWeftExecutorService( key, svc, threadCount, maxLoadFactor, metricRegistry, metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
