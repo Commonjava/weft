@@ -39,4 +39,6 @@ public @interface ExecutorConfig
 
     boolean daemon() default true;
 
+    boolean loadSensitive() default false;
+
 }

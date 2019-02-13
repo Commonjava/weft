@@ -17,6 +17,7 @@ package org.commonjava.cdi.util.weft;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import org.commonjava.cdi.util.weft.exception.PoolOverloadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,19 +54,22 @@ public class PoolWeftExecutorService
 
     private Float maxLoadFactor;
 
+    private boolean loadSensitive;
+
     private MetricRegistry metricRegistry;
 
     private String metricPrefix;
 
     private final AtomicInteger load = new AtomicInteger( 0 );
 
-    public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount, final Float maxLoadFactor, final MetricRegistry metricRegistry,
-                                    final String metricPrefix )
+    public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount, final Float maxLoadFactor,
+                                    boolean loadSensitive, final MetricRegistry metricRegistry, final String metricPrefix )
     {
         this.name = name;
         this.delegate = delegate;
         this.threadCount = threadCount;
         this.maxLoadFactor = maxLoadFactor;
+        this.loadSensitive = loadSensitive;
         this.metricRegistry = metricRegistry;
         this.metricPrefix = metricPrefix;
     }
@@ -131,21 +135,35 @@ public class PoolWeftExecutorService
         return delegate.awaitTermination( l, timeUnit );
     }
 
+    private void verifyLoad()
+    {
+        if ( loadSensitive && !isHealthy() )
+        {
+            throw new PoolOverloadException( getName(), getLoadFactor(), getCurrentLoad(), getThreadCount() );
+        }
+    }
+    
     @Override
     public <T> Future<T> submit( Callable<T> callable )
     {
+        verifyLoad();
+
         return delegate.submit( wrapCallable( callable ) );
     }
 
     @Override
     public <T> Future<T> submit( Runnable runnable, T t )
     {
+        verifyLoad();
+
         return delegate.submit( wrapRunnable( runnable ), t );
     }
 
     @Override
     public Future<?> submit( Runnable runnable )
     {
+        verifyLoad();
+
         return delegate.submit( wrapRunnable( runnable ) );
     }
 
@@ -153,6 +171,8 @@ public class PoolWeftExecutorService
     public <T> List<Future<T>> invokeAll( Collection<? extends Callable<T>> collection )
             throws InterruptedException
     {
+        verifyLoad();
+
         return delegate.invokeAll( wrapAll(collection) );
     }
 
@@ -160,6 +180,8 @@ public class PoolWeftExecutorService
     public <T> List<Future<T>> invokeAll( Collection<? extends Callable<T>> collection, long l, TimeUnit timeUnit )
             throws InterruptedException
     {
+        verifyLoad();
+
         return delegate.invokeAll( wrapAll( collection ), l, timeUnit );
     }
 
@@ -167,6 +189,8 @@ public class PoolWeftExecutorService
     public <T> T invokeAny( Collection<? extends Callable<T>> collection )
             throws InterruptedException, ExecutionException
     {
+        verifyLoad();
+
         return delegate.invokeAny( wrapAll( collection ) );
     }
 
@@ -174,36 +198,48 @@ public class PoolWeftExecutorService
     public <T> T invokeAny( Collection<? extends Callable<T>> collection, long l, TimeUnit timeUnit )
             throws InterruptedException, ExecutionException, TimeoutException
     {
+        verifyLoad();
+
         return delegate.invokeAny( wrapAll( collection ), l, timeUnit );
     }
 
     @Override
     public void execute( Runnable runnable )
     {
+        verifyLoad();
+
         delegate.execute( wrapRunnable( runnable ) );
     }
 
     @Override
     public ScheduledFuture<?> schedule( Runnable runnable, long l, TimeUnit timeUnit )
     {
+        verifyLoad();
+
         return asScheduled( ( d ) -> d.schedule( wrapRunnable( runnable ), l, timeUnit ) );
     }
 
     @Override
     public <V> ScheduledFuture<V> schedule( Callable<V> callable, long l, TimeUnit timeUnit )
     {
+        verifyLoad();
+
         return asScheduled( (d) -> d.schedule( wrapCallable( callable ), l, timeUnit ) );
     }
 
     @Override
     public ScheduledFuture<?> scheduleAtFixedRate( Runnable runnable, long l, long l1, TimeUnit timeUnit )
     {
+        verifyLoad();
+
         return asScheduled( ( d ) -> d.scheduleAtFixedRate( wrapRunnable( runnable ), l, l1, timeUnit ) );
     }
 
     @Override
     public ScheduledFuture<?> scheduleWithFixedDelay( Runnable runnable, long l, long l1, TimeUnit timeUnit )
     {
+        verifyLoad();
+
         return asScheduled( ( d ) -> d.scheduleWithFixedDelay( wrapRunnable( runnable ), l, l1, timeUnit ) );
     }
 
