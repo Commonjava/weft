@@ -116,6 +116,7 @@ public class WeftPoolBoy
         Float maxLoadFactor = null;
 
         boolean daemon = true;
+        boolean loadSensitive = false;
 
         // TODO: This may cause counter-intuitive sharing of thread pools for un-annotated injections...
         String name = "weft-unannotated";
@@ -127,6 +128,7 @@ public class WeftPoolBoy
             priority = ec.priority();
             maxLoadFactor = ec.maxLoadFactor();
             daemon = ec.daemon();
+            loadSensitive = ec.loadSensitive();
         }
 
         final String key = name + ":" + ( scheduled ? "scheduled" : "" );
@@ -140,6 +142,7 @@ public class WeftPoolBoy
         threadCount = config.getThreads( name, threadCount );
         priority = config.getPriority( name, priority );
         maxLoadFactor = config.getMaxLoadFactor( name, maxLoadFactor );
+        loadSensitive = config.isLoadSensitive( name, loadSensitive );
 
         ThreadPoolExecutor svc = null;
         if ( service == null )
@@ -167,7 +170,16 @@ public class WeftPoolBoy
 
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
 
-            service = new PoolWeftExecutorService( key, svc, threadCount, maxLoadFactor, metricRegistry, metricPrefix );
+            PoolWeftExecutorService weftExecutorService =
+                            new PoolWeftExecutorService( key, svc, threadCount, maxLoadFactor, metricRegistry,
+                                                         metricPrefix );
+
+            service = weftExecutorService;
+
+            if ( loadSensitive )
+            {
+                service = new LoadSensitivePoolWeftExecutorService( weftExecutorService );
+            }
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 

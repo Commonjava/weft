@@ -42,6 +42,8 @@ public interface WeftConfig
 
     float getDefaultMaxLoadFactor();
 
+    boolean isLoadSensitive( String poolName, boolean defaultLoadSensitive );
+
     String getNodePrefix(); // for cluster env
 
     Set<String> getKnownPools();

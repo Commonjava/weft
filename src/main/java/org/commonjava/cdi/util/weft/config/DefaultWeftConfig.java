@@ -44,6 +44,8 @@ public class DefaultWeftConfig
 
     private final Map<String, Float> maxLoadFactors = new HashMap<>();
 
+    private final Map<String, Boolean> loadSensitivePools = new HashMap<>();
+
     private int defaultThreads = DEFAULT_THREADS;
 
     private int defaultPriority = DEFAULT_PRIORITY;
@@ -130,6 +132,14 @@ public class DefaultWeftConfig
         knownPools.add( name );
 
         maxLoadFactors.put( name, maxLoadFactor );
+        return this;
+    }
+
+    public DefaultWeftConfig configureLoadSensitive( final String name, final boolean sensitive )
+    {
+        knownPools.add( name );
+
+        loadSensitivePools.put( name, sensitive );
         return this;
     }
 
@@ -227,6 +237,17 @@ public class DefaultWeftConfig
     public float getMaxLoadFactor( final String poolName, final Float defaultMax )
     {
         return getWithDefaultAndFailover( poolName, defaultMax, getDefaultMaxLoadFactor() );
+    }
+
+    @Override
+    public boolean isLoadSensitive( final String poolName, final boolean defaultLoadSensitive )
+    {
+        Boolean v = loadSensitivePools.get( poolName );
+        if ( v == null )
+        {
+            return defaultLoadSensitive;
+        }
+        return v;
     }
 
     @Override
