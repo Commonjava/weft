@@ -170,16 +170,8 @@ public class WeftPoolBoy
 
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
 
-            PoolWeftExecutorService weftExecutorService =
-                            new PoolWeftExecutorService( key, svc, threadCount, maxLoadFactor, metricRegistry,
-                                                         metricPrefix );
-
-            service = weftExecutorService;
-
-            if ( loadSensitive )
-            {
-                service = new LoadSensitivePoolWeftExecutorService( weftExecutorService );
-            }
+            service = new PoolWeftExecutorService( key, svc, threadCount, maxLoadFactor, loadSensitive, metricRegistry,
+                                                   metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
