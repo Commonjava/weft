@@ -11,7 +11,7 @@ public interface WeftExecutorService
 
     double getLoadFactor();
 
-    int getCurrentLoad();
+    long getCurrentLoad();
 
     Integer getThreadCount();
 
