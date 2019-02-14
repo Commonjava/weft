@@ -46,6 +46,8 @@ public class DefaultWeftConfig
 
     private final Map<String, Boolean> loadSensitivePools = new HashMap<>();
 
+    private boolean defaultLoadSensitive;
+
     private int defaultThreads = DEFAULT_THREADS;
 
     private int defaultPriority = DEFAULT_PRIORITY;
@@ -87,6 +89,12 @@ public class DefaultWeftConfig
     public DefaultWeftConfig configureDefaultMaxLoadFactor( final float maxLoadFactor )
     {
         this.defaultMaxLoadFactor = maxLoadFactor;
+        return this;
+    }
+
+    public DefaultWeftConfig configureDefaultLoadSensitive( final boolean defaultLoadSensitive )
+    {
+        this.defaultLoadSensitive = defaultLoadSensitive;
         return this;
     }
 
@@ -240,14 +248,15 @@ public class DefaultWeftConfig
     }
 
     @Override
-    public boolean isLoadSensitive( final String poolName, final boolean defaultLoadSensitive )
+    public boolean isLoadSensitive( final String poolName, final Boolean defaultValue )
     {
-        Boolean v = loadSensitivePools.get( poolName );
-        if ( v == null )
-        {
-            return defaultLoadSensitive;
-        }
-        return v;
+        return getWithDefaultAndFailover( poolName, defaultValue, isDefaultLoadSensitive() );
+    }
+
+    @Override
+    public boolean isDefaultLoadSensitive()
+    {
+        return defaultLoadSensitive;
     }
 
     @Override
@@ -273,6 +282,17 @@ public class DefaultWeftConfig
         if ( v == null )
         {
             return defaultValue == null  || defaultValue == 0 ? failover : defaultValue;
+        }
+
+        return v;
+    }
+
+    private boolean getWithDefaultAndFailover( String poolName, Boolean defaultValue, Boolean failover )
+    {
+        Boolean v = loadSensitivePools.get( poolName );
+        if ( v == null )
+        {
+            return defaultValue == null ? failover : defaultValue;
         }
 
         return v;
