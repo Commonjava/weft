@@ -114,9 +114,9 @@ public class WeftPoolBoy
         Integer threadCount = 0;
         Integer priority = null;
         Float maxLoadFactor = null;
+        Boolean loadSensitive = null;
 
         boolean daemon = true;
-        boolean loadSensitive = false;
 
         // TODO: This may cause counter-intuitive sharing of thread pools for un-annotated injections...
         String name = "weft-unannotated";
@@ -128,7 +128,16 @@ public class WeftPoolBoy
             priority = ec.priority();
             maxLoadFactor = ec.maxLoadFactor();
             daemon = ec.daemon();
-            loadSensitive = ec.loadSensitive();
+
+            int ls = ec.loadSensitive();
+            if ( ls == 0 )
+            {
+                loadSensitive = false;
+            }
+            else if ( ls == 1 )
+            {
+                loadSensitive = true;
+            }
         }
 
         final String key = name + ":" + ( scheduled ? "scheduled" : "" );
