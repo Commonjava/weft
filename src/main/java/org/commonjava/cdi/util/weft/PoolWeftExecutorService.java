@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,7 @@ public class PoolWeftExecutorService
 
     private String metricPrefix;
 
-    private final AtomicInteger load = new AtomicInteger( 0 );
+    private final AtomicLong load = new AtomicLong( 0L );
 
     public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount, final Float maxLoadFactor,
                                     boolean loadSensitive, final MetricRegistry metricRegistry, final String metricPrefix )
@@ -93,7 +94,7 @@ public class PoolWeftExecutorService
     }
 
     @Override
-    public int getCurrentLoad()
+    public long getCurrentLoad()
     {
         return load.get();
     }

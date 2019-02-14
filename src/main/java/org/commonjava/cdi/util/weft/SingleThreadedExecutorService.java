@@ -180,9 +180,9 @@ public class SingleThreadedExecutorService
     }
 
     @Override
-    public int getCurrentLoad()
+    public long getCurrentLoad()
     {
-        return isRunning.get() ? 1 : 0;
+        return isRunning.get() ? 1L : 0L;
     }
 
     @Override

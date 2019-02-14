@@ -196,8 +196,8 @@ public class WeftPoolBoy
         {
             metricRegistry.register( name( prefix, "corePoolSize" ), (Gauge<Integer>) () -> pool.getCorePoolSize() );
             metricRegistry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> pool.getActiveCount() );
-            metricRegistry.register( name( prefix, "maxPoolSize" ), (Gauge<Integer>) () -> pool.getMaximumPoolSize() );
-            metricRegistry.register( name( prefix, "queueSize" ), (Gauge<Long>) () -> pool.getTaskCount() );
+            metricRegistry.register( name( prefix, "loadFactor" ), (Gauge<Double>) () -> pool.getLoadFactor() );
+            metricRegistry.register( name( prefix, "currentLoad" ), (Gauge<Long>) () -> pool.getCurrentLoad() );
         }
 
         if ( healthCheckRegistry != null )
