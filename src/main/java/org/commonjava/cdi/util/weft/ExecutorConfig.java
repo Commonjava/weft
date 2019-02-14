@@ -28,6 +28,11 @@ import java.lang.annotation.Target;
 @Target( { METHOD, FIELD, PARAMETER, TYPE } )
 public @interface ExecutorConfig
 {
+    // to differentiate not specified and false/true
+    enum BooleanLiteral
+    {
+        NULL, TRUE, FALSE
+    }
 
     int threads() default 0;
 
@@ -39,6 +44,6 @@ public @interface ExecutorConfig
 
     boolean daemon() default true;
 
-    int loadSensitive() default -1; // -1 not specified, 0 false, 1 true
+    BooleanLiteral loadSensitive() default BooleanLiteral.NULL;
 
 }

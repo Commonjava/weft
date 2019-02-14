@@ -129,12 +129,12 @@ public class WeftPoolBoy
             maxLoadFactor = ec.maxLoadFactor();
             daemon = ec.daemon();
 
-            int ls = ec.loadSensitive();
-            if ( ls == 0 )
+            ExecutorConfig.BooleanLiteral ls = ec.loadSensitive();
+            if ( ls == ExecutorConfig.BooleanLiteral.FALSE )
             {
                 loadSensitive = false;
             }
-            else if ( ls == 1 )
+            else if ( ls == ExecutorConfig.BooleanLiteral.TRUE )
             {
                 loadSensitive = true;
             }
