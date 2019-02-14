@@ -3,25 +3,52 @@ package org.commonjava.cdi.util.weft.exception;
 public class PoolOverloadException
                 extends RuntimeException
 {
-    final String poolName;
+    private final String poolName;
 
-    final double loadFactor;
+    private final double loadFactor;
 
-    final int currentLoad;
+    private final double currentLoad;
 
-    final int threadCount;
+    private Float maxLoadFactor;
 
-    public PoolOverloadException( String poolName, double loadFactor, int currentLoad, int threadCount )
+    private final int threadCount;
+
+    public PoolOverloadException( String poolName, double loadFactor, double currentLoad, final Float maxLoadFactor, int threadCount )
     {
-
         this.poolName = poolName;
         this.loadFactor = loadFactor;
         this.currentLoad = currentLoad;
+        this.maxLoadFactor = maxLoadFactor;
         this.threadCount = threadCount;
     }
 
+    public String getPoolName()
+    {
+        return poolName;
+    }
+
+    public double getLoadFactor()
+    {
+        return loadFactor;
+    }
+
+    public Float getMaxLoadFactor()
+    {
+        return maxLoadFactor;
+    }
+
+    public double getCurrentLoad()
+    {
+        return currentLoad;
+    }
+
+    public int getThreadCount()
+    {
+        return threadCount;
+    }
+
     @Override
-    public String toString()
+    public String getMessage()
     {
         return "PoolOverloadException{" + "poolName='" + poolName + '\'' + ", loadFactor=" + loadFactor
                         + ", currentLoad=" + currentLoad + ", threadCount=" + threadCount + '}';
