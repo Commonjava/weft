@@ -83,7 +83,7 @@ public class PoolWeftExecutorService
     @Override
     public boolean isHealthy()
     {
-        return getLoadFactor() < maxLoadFactor;
+        return !loadSensitive || getLoadFactor() < maxLoadFactor;
     }
 
     @Override
@@ -139,7 +139,7 @@ public class PoolWeftExecutorService
     {
         if ( loadSensitive && !isHealthy() )
         {
-            throw new PoolOverloadException( getName(), getLoadFactor(), getCurrentLoad(), getThreadCount() );
+            throw new PoolOverloadException( getName(), getLoadFactor(), getCurrentLoad(), maxLoadFactor, getThreadCount() );
         }
     }
     
