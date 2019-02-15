@@ -342,12 +342,12 @@ public class PoolWeftExecutorService
     private <T> Collection<Callable<T>> wrapAll( Collection<? extends Callable<T>> collection )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
+        load.addAndGet( collection.size() );
         return collection.parallelStream().map( ( callable ) -> {
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
             return timeCallable((Callable<T>) () -> {
-                load.incrementAndGet();
                 try
                 {
                     return callable.call();
@@ -365,8 +365,8 @@ public class PoolWeftExecutorService
     private Runnable wrapRunnable( Runnable runnable )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
+        load.incrementAndGet();
         return timeRunnable(()->{
-            load.incrementAndGet();
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
@@ -387,8 +387,8 @@ public class PoolWeftExecutorService
     private <T> Callable<T> wrapCallable( Callable<T> callable )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
+        load.incrementAndGet();
         return timeCallable((Callable<T>) ()->{
-            load.incrementAndGet();
             ThreadContext old = ThreadContext.setContext( ctx );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
