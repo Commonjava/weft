@@ -31,7 +31,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,23 +44,36 @@ public class PoolWeftExecutorService
         implements WeftExecutorService, ScheduledExecutorService
 {
     private static final String TIMER = "timer";
+
     private static final String METER = "meter";
 
-    private String name;
+    private static final int DEFAULT_THREAD_COUNT = 2;
 
-    private ThreadPoolExecutor delegate;
+    private static final float DEFAULT_LOAD_FACTOR = 10f;
 
-    private Integer threadCount;
+    private static final boolean DEFAULT_LOAD_SENSITIVE = false;
 
-    private Float maxLoadFactor;
+    private final String name;
 
-    private boolean loadSensitive;
+    private final ThreadPoolExecutor delegate;
 
-    private MetricRegistry metricRegistry;
+    private final Integer threadCount;
 
-    private String metricPrefix;
+    private final Float maxLoadFactor;
+
+    private final boolean loadSensitive;
+
+    private final MetricRegistry metricRegistry;
+
+    private final String metricPrefix;
 
     private final AtomicLong load = new AtomicLong( 0L );
+
+
+    public PoolWeftExecutorService( String name, ThreadPoolExecutor delegate )
+    {
+        this( name, delegate, DEFAULT_THREAD_COUNT, DEFAULT_LOAD_FACTOR, DEFAULT_LOAD_SENSITIVE, null, null );
+    }
 
     public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount, final Float maxLoadFactor,
                                     boolean loadSensitive, final MetricRegistry metricRegistry, final String metricPrefix )
