@@ -33,6 +33,12 @@ public class NamedThreadFactory
 
     private ThreadGroup threadGroup;
 
+    @Deprecated
+    public NamedThreadFactory( final String name, final boolean daemon, final int priority )
+    {
+        this( name, new ThreadGroup( "Weft-Deprecated" ), daemon, priority );
+    }
+
     public NamedThreadFactory( final String name, final ThreadGroup threadGroup, final boolean daemon, final int priority )
     {
         this.threadGroup = threadGroup;
