@@ -169,7 +169,8 @@ public class WeftPoolBoy
         ThreadPoolExecutor svc = null;
         if ( service == null )
         {
-            final NamedThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
+            ThreadGroup threadGroup = new ThreadGroup( name );
+            final NamedThreadFactory fac = new NamedThreadFactory( name, threadGroup, daemon, priority );
 
             if ( scheduled )
             {
