@@ -86,10 +86,14 @@ public class ThreadContext implements Map<String, Object>
             oldCtx.runFinalizersIfDone();
         }
 
-        THREAD_LOCAL.set( ctx );
         if ( ctx != null )
         {
+            THREAD_LOCAL.set( ctx );
             ctx.refs++;
+        }
+        else
+        {
+            THREAD_LOCAL.remove();
         }
 
         return oldCtx;
