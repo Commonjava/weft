@@ -153,7 +153,7 @@ public class WeftPoolBoy
             }
         }
 
-        final String key = name + ":" + ( scheduled ? "scheduled" : "" );
+        final String key = name + ( scheduled ? ":scheduled" : "" );
         WeftExecutorService service = getPool( key );
         if ( service == null && ( !config.isEnabled() || !config.isEnabled( name ) ) )
         {
@@ -169,7 +169,8 @@ public class WeftPoolBoy
         ThreadPoolExecutor svc = null;
         if ( service == null )
         {
-            final NamedThreadFactory fac = new NamedThreadFactory( name, daemon, priority );
+            ThreadGroup threadGroup = new ThreadGroup( name );
+            final NamedThreadFactory fac = new NamedThreadFactory( name, threadGroup, daemon, priority );
 
             if ( scheduled )
             {
@@ -192,7 +193,7 @@ public class WeftPoolBoy
 
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
 
-            service = new PoolWeftExecutorService( key, svc, threadCount, maxLoadFactor, loadSensitive, metricRegistry,
+            service = new PoolWeftExecutorService( name, svc, threadCount, maxLoadFactor, loadSensitive, metricRegistry,
                                                    metricPrefix );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
@@ -218,7 +219,7 @@ public class WeftPoolBoy
 
         if ( healthCheckRegistry != null )
         {
-            healthCheckRegistry.register( pool.getName(), new WeftPoolHealthCheck( pool ) );
+            healthCheckRegistry.register( name( prefix, pool.getName() ), new WeftPoolHealthCheck( pool ) );
         }
     }
 

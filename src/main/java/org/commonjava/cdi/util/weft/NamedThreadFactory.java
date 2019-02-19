@@ -31,8 +31,11 @@ public class NamedThreadFactory
 
     private final int priority;
 
-    public NamedThreadFactory( final String name, final boolean daemon, final int priority )
+    private ThreadGroup threadGroup;
+
+    public NamedThreadFactory( final String name, final ThreadGroup threadGroup, final boolean daemon, final int priority )
     {
+        this.threadGroup = threadGroup;
         this.ccl = Thread.currentThread()
                          .getContextClassLoader();
         this.name = name;
@@ -43,7 +46,7 @@ public class NamedThreadFactory
     @Override
     public Thread newThread( final Runnable runnable )
     {
-        final Thread t = new Thread( runnable );
+        final Thread t = new Thread( threadGroup, runnable );
         t.setContextClassLoader( ccl );
         t.setName( name + "-" + counter++ );
         t.setDaemon( daemon );
