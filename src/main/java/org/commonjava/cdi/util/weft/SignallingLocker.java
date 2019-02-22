@@ -28,33 +28,59 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class Locker<K>
+/**
+ * Variant of {{@link Locker}} that wraps both a {@link ReentrantLock} AND a {@link java.util.concurrent.locks.Condition}
+ * via {@link SignallingLock} to allow multiple threads to coordinate work via a single lock. The point of this class
+ * is to manage the lock for a given operation, given some locking key. The lock itself (and the key) is passed into
+ * the operation, so it can call things like {@link SignallingLock#await()}.
+ *
+ * This locker also uses a {@link TimerTask} to sweep for unused locks and clear them.
+
+ * @param <K> The key used to map the locks.
+ */
+public class SignallingLocker<K>
 {
     private static final long DEFAULT_SWEEP_MS = 10 * 1000;
 
     private final Timer timer = new Timer();
 
-    private Map<K, ReentrantLock> locks;
+    private final Map<K, SignallingLock> locks;
 
-    public Locker()
+    public SignallingLocker()
     {
-        this( Collections.synchronizedMap( new ContextSensitiveWeakHashMap<>() ), DEFAULT_SWEEP_MS );
+        this( ContextSensitiveWeakHashMap.newSynchronizedContextSensitiveWeakHashMap(), DEFAULT_SWEEP_MS );
     }
 
-    public Locker( long sweepStaleLocks )
+    public SignallingLocker( long staleSweepMillis )
     {
-        this( Collections.synchronizedMap( new ContextSensitiveWeakHashMap<>() ), sweepStaleLocks );
+        this( ContextSensitiveWeakHashMap.newSynchronizedContextSensitiveWeakHashMap(), staleSweepMillis );
     }
 
-    public Locker( Map<K, ReentrantLock> locks, long staleSweepMillis )
+    public SignallingLocker( Map<K, SignallingLock> locks, long staleSweepMillis )
     {
         this.locks = Collections.synchronizedMap( locks );
+
         this.timer.scheduleAtFixedRate( new SweepStaleTask(), staleSweepMillis, staleSweepMillis );
     }
 
-    public <T> T ifUnlocked( K key, Function<K, T> function, BiFunction<K, ReentrantLock, T> lockedFunction )
+    private final class SweepStaleTask
+            extends TimerTask
     {
-        final ReentrantLock lock = locks.computeIfAbsent( key, k -> new ReentrantLock() );
+        @Override
+        public void run()
+        {
+            new HashMap<>( locks ).forEach( ( key, lock)->{
+                if ( lock.isStale() )
+                {
+                    locks.remove( key );
+                }
+            } );
+        }
+    }
+
+    public <T> T ifUnlocked( K key, Function<K, T> function, BiFunction<K, SignallingLock, T> lockedFunction )
+    {
+        final SignallingLock lock = locks.computeIfAbsent( key, k -> new SignallingLock() );
         Boolean locked = false;
         try
         {
@@ -95,11 +121,55 @@ public class Locker<K>
         return waitingLocked;
     }
 
-    public <T> T lockAnd( K key, long timeoutSeconds, Function<K, T> function, BiFunction<K, ReentrantLock, Boolean> lockFailedFunction )
+    public <T> T lockAnd( K key, BiFunction<K, SignallingLock, T> function )
     {
         Logger logger = LoggerFactory.getLogger( getClass() );
 
-        final ReentrantLock lock = locks.computeIfAbsent( key, k -> new ReentrantLock() );
+        final SignallingLock lock = locks.computeIfAbsent( key, k -> new SignallingLock() );
+        Boolean locked = false;
+        try
+        {
+            locked = lock.lock();
+
+            if ( locked )
+            {
+                logger.debug( "Applying function locked with: {}", key );
+                return function.apply( key, lock );
+            }
+            else
+            {
+                logger.debug( "Lock failed for key: {}", key );
+            }
+        }
+        catch ( InterruptedException e )
+        {
+            logger.warn( "Interrupted waiting for lock on key: {}", key );
+        }
+        finally
+        {
+            logger.debug( "Done, checking whether unlock needed for: {}", key );
+            if ( locked )
+            {
+                logger.debug( "Unlocking key: {}", key );
+                lock.unlock();
+            }
+        }
+
+        logger.debug( "No retries, return null for locked operation on key: {}", key );
+        return null;
+    }
+
+    public <T> T lockAnd( K key, long timeoutSeconds, BiFunction<K, SignallingLock, T> function )
+    {
+        return lockAnd( key, timeoutSeconds, function, ( k, lock ) -> false );
+    }
+
+    public <T> T lockAnd( K key, long timeoutSeconds, BiFunction<K, SignallingLock, T> function,
+                             BiFunction<K, SignallingLock, Boolean> lockFailedFunction )
+    {
+        Logger logger = LoggerFactory.getLogger( getClass() );
+
+        final SignallingLock lock = locks.computeIfAbsent( key, k -> new SignallingLock() );
         Boolean retry = false;
         do
         {
@@ -107,11 +177,19 @@ public class Locker<K>
             try
             {
                 logger.debug( "Locking on: {} with timeout seconds: {}", key, timeoutSeconds );
-                locked = lock.tryLock( timeoutSeconds, TimeUnit.SECONDS );
+                if ( timeoutSeconds > 0 )
+                {
+                    locked = lock.tryLock( timeoutSeconds, TimeUnit.SECONDS );
+                }
+                else
+                {
+                    locked = lock.lock();
+                }
+
                 if ( locked )
                 {
                     logger.debug( "Applying function locked with: {}", key );
-                    return function.apply( key );
+                    return function.apply( key, lock );
                 }
                 else
                 {
@@ -140,26 +218,4 @@ public class Locker<K>
         return null;
     }
 
-    private boolean isStale( ReentrantLock lock )
-    {
-        synchronized ( lock )
-        {
-            return !lock.isLocked() && !lock.hasQueuedThreads();
-        }
-    }
-
-    private final class SweepStaleTask
-            extends TimerTask
-    {
-        @Override
-        public void run()
-        {
-            new HashMap<>( locks ).forEach( ( key, lock)->{
-                if ( isStale(lock) )
-                {
-                    locks.remove( key );
-                }
-            } );
-        }
-    }
 }
