@@ -23,6 +23,8 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import static com.codahale.metrics.MetricRegistry.name;
 
 @ApplicationScoped
@@ -42,9 +44,9 @@ public class ExecutorProvider
 
     @Produces
     @WeftScheduledExecutor
-    public WeftExecutorService getScheduledExecutorService( final InjectionPoint ip )
+    public ScheduledExecutorService getScheduledExecutorService( final InjectionPoint ip )
     {
-        return getExec( ip, true );
+        return (ScheduledExecutorService) getExec( ip, true );
     }
 
     private WeftExecutorService getExec( final InjectionPoint ip, final boolean scheduled )

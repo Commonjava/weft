@@ -16,6 +16,7 @@
 package org.commonjava.cdi.util.weft;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 public interface WeftExecutorService
         extends ExecutorService

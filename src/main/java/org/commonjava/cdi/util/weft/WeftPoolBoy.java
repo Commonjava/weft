@@ -157,8 +157,16 @@ public class WeftPoolBoy
         WeftExecutorService service = getPool( key );
         if ( service == null && ( !config.isEnabled() || !config.isEnabled( name ) ) )
         {
-            service = new SingleThreadedExecutorService( key );
-            addPool( service );
+            if ( !scheduled )
+            {
+                service = new SingleThreadedExecutorService( key );
+                addPool( service );
+            }
+            else
+            {
+                threadCount = 1;
+//                throw new IllegalStateException( "Cannot create executor for disabled, scheduled executor: " + name );
+            }
         }
 
         threadCount = config.getThreads( name, threadCount );
