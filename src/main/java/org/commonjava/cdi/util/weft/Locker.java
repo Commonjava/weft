@@ -38,12 +38,12 @@ public class Locker<K>
 
     public Locker()
     {
-        this( Collections.synchronizedMap( new ContextSensitiveWeakHashMap<>() ), DEFAULT_SWEEP_MS );
+        this( new ContextSensitiveWeakHashMap<>(), DEFAULT_SWEEP_MS );
     }
 
     public Locker( long sweepStaleLocks )
     {
-        this( Collections.synchronizedMap( new ContextSensitiveWeakHashMap<>() ), sweepStaleLocks );
+        this( new ContextSensitiveWeakHashMap<>(), sweepStaleLocks );
     }
 
     public Locker( Map<K, ReentrantLock> locks, long staleSweepMillis )
