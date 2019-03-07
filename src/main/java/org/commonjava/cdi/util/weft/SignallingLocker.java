@@ -48,12 +48,12 @@ public class SignallingLocker<K>
 
     public SignallingLocker()
     {
-        this( ContextSensitiveWeakHashMap.newSynchronizedContextSensitiveWeakHashMap(), DEFAULT_SWEEP_MS );
+        this( new ContextSensitiveWeakHashMap(), DEFAULT_SWEEP_MS );
     }
 
     public SignallingLocker( long staleSweepMillis )
     {
-        this( ContextSensitiveWeakHashMap.newSynchronizedContextSensitiveWeakHashMap(), staleSweepMillis );
+        this( new ContextSensitiveWeakHashMap(), staleSweepMillis );
     }
 
     public SignallingLocker( Map<K, SignallingLock> locks, long staleSweepMillis )
