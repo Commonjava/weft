@@ -69,13 +69,21 @@ public class SignallingLocker<K>
         @Override
         public void run()
         {
-            new HashMap<>( locks ).forEach( ( key, lock)->{
+            new HashMap<>( locks ).forEach( ( key, lock )-> {
                 if ( lock.isStale() )
                 {
                     locks.remove( key );
                 }
             } );
         }
+    }
+
+    /**
+     * Remove lock proactively
+     */
+    public void removeLock( K key )
+    {
+        locks.computeIfPresent( key, ( k, lock ) -> locks.remove( k ) );
     }
 
     public <T> T ifUnlocked( K key, Function<K, T> function, BiFunction<K, SignallingLock, T> lockedFunction )
