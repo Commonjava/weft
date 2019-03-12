@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.commonjava</groupId>
     <artifactId>commonjava</artifactId>
-    <version>12</version>
+    <version>13</version>
   </parent>
   
   <groupId>org.commonjava.cdi.util</groupId>
@@ -44,6 +44,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
     <metrics.version>4.0.2</metrics.version>
+    <weldVersion>2.4.6.Final</weldVersion>
   </properties>
 
   <dependencyManagement>
@@ -102,6 +103,7 @@
       <groupId>org.jboss.weld.se</groupId>
       <artifactId>weld-se</artifactId>
       <scope>test</scope>
+      <version>${weldVersion}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
