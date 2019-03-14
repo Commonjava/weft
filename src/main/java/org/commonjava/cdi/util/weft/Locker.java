@@ -154,7 +154,13 @@ public class Locker<K>
         @Override
         public void run()
         {
-            new HashMap<>( locks ).forEach( ( key, lock)->{
+            Map<K, ReentrantLock> toScan;
+            synchronized ( locks )
+            {
+                toScan = new HashMap<>( locks );
+            }
+
+            toScan.forEach( ( key, lock)->{
                 if ( isStale(lock) )
                 {
                     locks.remove( key );
