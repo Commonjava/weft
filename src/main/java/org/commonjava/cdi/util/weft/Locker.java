@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -155,9 +156,15 @@ public class Locker<K>
         public void run()
         {
             Map<K, ReentrantLock> toScan;
-            synchronized ( locks )
+            try
             {
                 toScan = new HashMap<>( locks );
+            }
+            catch ( ConcurrentModificationException e )
+            {
+                Logger logger = LoggerFactory.getLogger( getClass() );
+                logger.warn( "Failed to create toScan. Abort the sweeping task for once", e.getMessage() );
+                return;
             }
 
             toScan.forEach( ( key, lock)->{
