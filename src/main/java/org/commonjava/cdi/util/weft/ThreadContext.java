@@ -68,9 +68,9 @@ public class ThreadContext implements Map<String, Object>
     public static ThreadContext setContext( ThreadContext ctx )
     {
         ThreadContext oldCtx = swapContext( ctx );
-        if ( ctx != null && ctx.mdcMap != null  )
+        if ( oldCtx != null && oldCtx.mdcMap != null  )
         {
-            MDC.setContextMap(ctx.mdcMap);
+            MDC.setContextMap(oldCtx.mdcMap);
         }
         return oldCtx;
     }
