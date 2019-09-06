@@ -26,20 +26,32 @@ import org.slf4j.MDC;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 @ApplicationScoped
 public class MDCTest {
 
-    @WeftManaged
     @Inject
-    private ExecutorService executor;
+    @WeftManaged
+    @ExecutorConfig( named = "weft-test", threads = 2, loadSensitive = ExecutorConfig.BooleanLiteral.TRUE )
+    private WeftExecutorService executor;
 
     ExecutorService getExecutorService() {
         return executor;
+    }
+
+    @Inject
+    @WeftManaged
+    @ExecutorConfig( named = "weft-embedded", threads = 2, loadSensitive = ExecutorConfig.BooleanLiteral.TRUE )
+    private WeftExecutorService embedded;
+
+    ExecutorService getEmbedded() {
+        return embedded;
     }
 
     private Weld weld;
@@ -53,8 +65,9 @@ public class MDCTest {
     }
 
     /**
-     * Inject an ExecutorService instance using @WeftManaged and then set a value in the MDC in the main test method.
-     * Then, we start a new Runnable via the ExecutorService, and verify that the value is available in the MDC map of the Runnable.
+     * Inject two WeftExecutorService instances using @WeftManaged that one is embedded in the another one;
+     * and set the values in the MDC in each thread, Then, we verify that all of the values are available
+     * in the leaf thread.
      */
     @Test
     public void run()
@@ -66,10 +79,49 @@ public class MDCTest {
 
         ThreadContext ctx = ThreadContext.getContext(true);
 
-        client.getExecutorService().execute( () -> {
+        DrainingExecutorCompletionService<Exception> svc =
+                        new DrainingExecutorCompletionService<>( client.getExecutorService() );
+
+        svc.submit( () -> {
+
+            DrainingExecutorCompletionService<Exception> svc2 =
+                            new DrainingExecutorCompletionService<>( client.getEmbedded() );
+
             logger.debug("Start processing...");
             assertThat(MDC.get("requestID"), equalTo("master-indy-01"));
-        });
+
+            MDC.put( "promoteID", "promote-id-01" );
+
+            svc2.submit( () -> {
+                MDC.put( "ruleFile", "validation.groovy" );
+
+                logger.debug("Start embedded processing...");
+                logger.debug("MDC ContextMap: {}", MDC.getCopyOfContextMap());
+
+                assertThat( MDC.get( "requestID" ), equalTo( "master-indy-01" ) );
+                assertThat( MDC.get( "promoteID" ), equalTo( "promote-id-01" ) );
+                assertThat( MDC.get( "ruleFile" ), equalTo( "validation.groovy" ) );
+                return null;
+            } );
+
+            svc2.drain( entry -> {
+                //DO NOTHING
+            } );
+
+            return null;
+        } );
+
+        try
+        {
+            svc.drain( entry -> {
+                //DO NOTHING
+            } );
+        }
+        catch ( InterruptedException | ExecutionException e )
+        {
+           fail(e.getMessage());
+        }
+
     }
 
     @After
