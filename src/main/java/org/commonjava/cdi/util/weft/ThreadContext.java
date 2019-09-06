@@ -58,8 +58,12 @@ public class ThreadContext implements Map<String, Object>
         if ( threadContext == null && create )
         {
             threadContext = new ThreadContext();
-            threadContext.mdcMap = MDC.getCopyOfContextMap();
             THREAD_LOCAL.set( threadContext );
+        }
+
+        if ( threadContext != null )
+        {
+            threadContext.mdcMap = MDC.getCopyOfContextMap();
         }
 
         return threadContext;
@@ -68,9 +72,9 @@ public class ThreadContext implements Map<String, Object>
     public static ThreadContext setContext( ThreadContext ctx )
     {
         ThreadContext oldCtx = swapContext( ctx );
-        if ( oldCtx != null && oldCtx.mdcMap != null  )
+        if ( ctx != null && ctx.mdcMap != null  )
         {
-            MDC.setContextMap(oldCtx.mdcMap);
+            MDC.setContextMap(ctx.mdcMap);
         }
         return oldCtx;
     }
