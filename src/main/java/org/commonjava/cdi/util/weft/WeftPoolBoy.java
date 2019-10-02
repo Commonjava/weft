@@ -155,7 +155,7 @@ public class WeftPoolBoy
 
         final String key = name + ( scheduled ? ":scheduled" : "" );
         WeftExecutorService service = getPool( key );
-        if ( service == null && ( !config.isEnabled() || !config.isEnabled( name ) ) )
+        if ( service == null && ( !config.isEnabled() || !config.isEnabled( name ) || config.getThreads( name ) < 2 ) )
         {
             if ( !scheduled )
             {

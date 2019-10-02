@@ -114,7 +114,7 @@ public class PoolWeftExecutorService
     @Override
     public Integer getThreadCount()
     {
-        return threadCount;
+        return threadCount < 1 ? 1 : threadCount;
     }
 
     @Override
