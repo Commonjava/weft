@@ -184,7 +184,7 @@ public class DefaultWeftConfig
     @Override
     public int getDefaultThreads()
     {
-        return defaultThreads;
+        return defaultThreads < 1 ? 1 : defaultThreads;
     }
 
     @Override
@@ -268,9 +268,9 @@ public class DefaultWeftConfig
     private int getWithDefaultAndFailover( final String poolName, final String suffix, final Integer defaultValue, final int failover )
     {
         final Integer v = config.get( poolName + suffix );
-        if ( v == null )
+        if ( v == null || v < 1 )
         {
-            return defaultValue == null  || defaultValue == 0 ? failover : defaultValue;
+            return defaultValue == null  || defaultValue < 1 ? failover : defaultValue;
         }
 
         return v;
