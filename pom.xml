@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.commonjava</groupId>
     <artifactId>commonjava</artifactId>
-    <version>13</version>
+    <version>16</version>
   </parent>
   
   <groupId>org.commonjava.cdi.util</groupId>
