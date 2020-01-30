@@ -75,7 +75,7 @@ public class MDCTest {
         MDCTest client = container.instance().select(MDCTest.class).get();
 
         Logger logger = LoggerFactory.getLogger( getClass() );
-        MDC.put("requestID", "master-indy-01");
+        MDC.put( "requestID", "master-indy-01");
 
         ThreadContext ctx = ThreadContext.getContext(true);
 
