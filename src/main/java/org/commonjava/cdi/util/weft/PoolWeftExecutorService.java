@@ -22,7 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -34,6 +39,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -67,16 +73,21 @@ public class PoolWeftExecutorService
 
     private final String metricPrefix;
 
+    private Set<ThreadContextualizer> contextualizers;
+
     private final AtomicLong load = new AtomicLong( 0L );
 
 
     public PoolWeftExecutorService( String name, ThreadPoolExecutor delegate )
     {
-        this( name, delegate, DEFAULT_THREAD_COUNT, DEFAULT_LOAD_FACTOR, DEFAULT_LOAD_SENSITIVE, null, null );
+        this( name, delegate, DEFAULT_THREAD_COUNT, DEFAULT_LOAD_FACTOR, DEFAULT_LOAD_SENSITIVE, null, null,
+              Collections.emptySet() );
     }
 
-    public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount, final Float maxLoadFactor,
-                                    boolean loadSensitive, final MetricRegistry metricRegistry, final String metricPrefix )
+    public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount,
+                                    final Float maxLoadFactor, boolean loadSensitive,
+                                    final MetricRegistry metricRegistry, final String metricPrefix,
+                                    Iterable<ThreadContextualizer> contextualizers )
     {
         this.name = name;
         this.delegate = delegate;
@@ -85,6 +96,8 @@ public class PoolWeftExecutorService
         this.loadSensitive = loadSensitive;
         this.metricRegistry = metricRegistry;
         this.metricPrefix = metricPrefix;
+        this.contextualizers = new HashSet<>();
+        contextualizers.forEach( c -> this.contextualizers.add( c ) );
     }
 
     @Override
@@ -342,9 +355,11 @@ public class PoolWeftExecutorService
     private <T> Collection<Callable<T>> wrapAll( Collection<? extends Callable<T>> collection )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
+        Map<String, Object> extractedContext = extractContext();
         load.addAndGet( collection.size() );
         return collection.parallelStream().map( ( callable ) -> {
             ThreadContext old = ThreadContext.setContext( ctx );
+            setContext( extractedContext );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
             return timeCallable((Callable<T>) () -> {
@@ -356,6 +371,7 @@ public class PoolWeftExecutorService
                 {
                     logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                     ThreadContext.setContext( old );
+                    clearBridgedContext();
                     load.decrementAndGet();
                 }
             });
@@ -365,9 +381,11 @@ public class PoolWeftExecutorService
     private Runnable wrapRunnable( Runnable runnable )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
+        Map<String, Object> extractedContext = extractContext();
         load.incrementAndGet();
         return timeRunnable(()->{
             ThreadContext old = ThreadContext.setContext( ctx );
+            setContext( extractedContext );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
 
@@ -379,6 +397,7 @@ public class PoolWeftExecutorService
             {
                 logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
+                clearBridgedContext();
                 load.decrementAndGet();
             }
         });
@@ -387,9 +406,11 @@ public class PoolWeftExecutorService
     private <T> Callable<T> wrapCallable( Callable<T> callable )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
+        Map<String, Object> extractedContext = extractContext();
         load.incrementAndGet();
         return timeCallable((Callable<T>) ()->{
             ThreadContext old = ThreadContext.setContext( ctx );
+            setContext( extractedContext );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
             try
@@ -400,9 +421,28 @@ public class PoolWeftExecutorService
             {
                 logger.debug( "Restoring ThreadContext: {} in: {}", old, Thread.currentThread().getName() );
                 ThreadContext.setContext( old );
+                clearBridgedContext();
                 load.decrementAndGet();
             }
         });
+    }
+
+    private void clearBridgedContext()
+    {
+        contextualizers.forEach( ThreadContextualizer::clearContext );
+    }
+
+    private void setContext( final Map<String, Object> extractedContext )
+    {
+        contextualizers.forEach( tc -> tc.setChildContext( extractedContext.get( tc.getId() ) ) );
+    }
+
+    private Map<String, Object> extractContext()
+    {
+        Map<String, Object> context = new HashMap<>();
+        contextualizers.forEach( tc -> context.put( tc.getId(), tc.extractCurrentContext() ) );
+
+        return context;
     }
 
 }

@@ -57,6 +57,9 @@ public class WeftPoolBoy
     @Inject
     private Instance<HealthCheckRegistry> healthCheckRegistryInstance;
 
+    @Inject
+    private Instance<ThreadContextualizer> contextualizers;
+
     private HealthCheckRegistry healthCheckRegistry;
 
     protected WeftPoolBoy(){}
@@ -202,7 +205,7 @@ public class WeftPoolBoy
             String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
 
             service = new PoolWeftExecutorService( name, svc, threadCount, maxLoadFactor, loadSensitive, metricRegistry,
-                                                   metricPrefix );
+                                                   metricPrefix, contextualizers );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
@@ -222,7 +225,6 @@ public class WeftPoolBoy
             metricRegistry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> pool.getActiveCount() );
             metricRegistry.register( name( prefix, "loadFactor" ), (Gauge<Double>) () -> pool.getLoadFactor() );
             metricRegistry.register( name( prefix, "currentLoad" ), (Gauge<Long>) () -> pool.getCurrentLoad() );
-            metricRegistry.register( name( prefix, "queueSize" ), (Gauge<Long>) () -> pool.getTaskCount() );
         }
 
         if ( healthCheckRegistry != null )
