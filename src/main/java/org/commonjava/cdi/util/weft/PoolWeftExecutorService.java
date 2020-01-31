@@ -86,6 +86,14 @@ public class PoolWeftExecutorService
 
     public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount,
                                     final Float maxLoadFactor, boolean loadSensitive,
+                                    final MetricRegistry metricRegistry, final String metricPrefix )
+    {
+        this( name, delegate, threadCount, maxLoadFactor, loadSensitive, metricRegistry, metricPrefix,
+              Collections.emptySet() );
+    }
+
+    public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount,
+                                    final Float maxLoadFactor, boolean loadSensitive,
                                     final MetricRegistry metricRegistry, final String metricPrefix,
                                     Iterable<ThreadContextualizer> contextualizers )
     {
