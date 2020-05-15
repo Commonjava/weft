@@ -270,7 +270,7 @@ public class DefaultWeftConfig
         final Integer v = config.get( poolName + suffix );
         if ( v == null || v < 1 )
         {
-            return defaultValue == null  || defaultValue < 1 ? failover : defaultValue;
+            return defaultValue == null || defaultValue < 0 ? failover : defaultValue;
         }
 
         return v;
