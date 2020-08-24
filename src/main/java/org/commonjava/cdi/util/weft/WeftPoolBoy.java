@@ -15,10 +15,9 @@
  */
 package org.commonjava.cdi.util.weft;
 
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.health.HealthCheckRegistry;
 import org.commonjava.cdi.util.weft.config.WeftConfig;
+import org.commonjava.o11yphant.metrics.api.Gauge;
+import org.commonjava.o11yphant.metrics.api.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import static org.commonjava.o11yphant.metrics.util.NameUtils.name;
 
 @ApplicationScoped
 public class WeftPoolBoy
@@ -55,20 +54,14 @@ public class WeftPoolBoy
     private MetricRegistry metricRegistry;
 
     @Inject
-    private Instance<HealthCheckRegistry> healthCheckRegistryInstance;
-
-    @Inject
     private Instance<ThreadContextualizer> contextualizers;
-
-    private HealthCheckRegistry healthCheckRegistry;
 
     protected WeftPoolBoy(){}
 
-    public WeftPoolBoy( WeftConfig config, MetricRegistry registry, HealthCheckRegistry healthCheckRegistry )
+    public WeftPoolBoy( WeftConfig config, MetricRegistry registry )
     {
         this.config = config;
         this.metricRegistry = registry;
-        this.healthCheckRegistry = healthCheckRegistry;
     }
 
     @PostConstruct
@@ -77,11 +70,6 @@ public class WeftPoolBoy
         if ( !metricRegistryInstance.isUnsatisfied() )
         {
             this.metricRegistry = metricRegistryInstance.get();
-        }
-
-        if ( !healthCheckRegistryInstance.isUnsatisfied() )
-        {
-            this.healthCheckRegistry = healthCheckRegistryInstance.get();
         }
     }
 
@@ -225,11 +213,8 @@ public class WeftPoolBoy
             metricRegistry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> pool.getActiveCount() );
             metricRegistry.register( name( prefix, "loadFactor" ), (Gauge<Double>) () -> pool.getLoadFactor() );
             metricRegistry.register( name( prefix, "currentLoad" ), (Gauge<Long>) () -> pool.getCurrentLoad() );
-        }
 
-        if ( healthCheckRegistry != null )
-        {
-            healthCheckRegistry.register( name( prefix, pool.getName() ), new WeftPoolHealthCheck( pool ) );
+            metricRegistry.registerHealthCheck( name( prefix, pool.getName() ), new WeftPoolHealthCheck( pool ) );
         }
     }
 

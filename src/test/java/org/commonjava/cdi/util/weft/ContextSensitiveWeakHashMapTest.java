@@ -77,7 +77,7 @@ public class ContextSensitiveWeakHashMapTest
         Logger logger = LoggerFactory.getLogger( getClass() );
 
         ContextSensitiveWeakHashMapTest client =
-                        container.instance().select( ContextSensitiveWeakHashMapTest.class ).get();
+                        container.select( ContextSensitiveWeakHashMapTest.class ).get();
 
         String path = "foo/bar/bar-1.0.pom";
 

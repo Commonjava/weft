@@ -41,7 +41,8 @@ public class MDCTest {
     @ExecutorConfig( named = "weft-test", threads = 2, loadSensitive = ExecutorConfig.BooleanLiteral.TRUE )
     private WeftExecutorService executor;
 
-    ExecutorService getExecutorService() {
+    ExecutorService getExecutor()
+    {
         return executor;
     }
 
@@ -50,7 +51,8 @@ public class MDCTest {
     @ExecutorConfig( named = "weft-embedded", threads = 2, loadSensitive = ExecutorConfig.BooleanLiteral.TRUE )
     private WeftExecutorService embedded;
 
-    ExecutorService getEmbedded() {
+    ExecutorService getEmbedded()
+    {
         return embedded;
     }
 
@@ -72,7 +74,7 @@ public class MDCTest {
     @Test
     public void run()
     {
-        MDCTest client = container.instance().select(MDCTest.class).get();
+        MDCTest client = container.select( MDCTest.class ).get();
 
         Logger logger = LoggerFactory.getLogger( getClass() );
         MDC.put( "requestID", "master-indy-01");
@@ -80,7 +82,7 @@ public class MDCTest {
         ThreadContext ctx = ThreadContext.getContext(true);
 
         DrainingExecutorCompletionService<Exception> svc =
-                        new DrainingExecutorCompletionService<>( client.getExecutorService() );
+                        new DrainingExecutorCompletionService<>( client.getExecutor() );
 
         svc.submit( () -> {
 

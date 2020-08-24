@@ -25,8 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.codahale.metrics.MetricRegistry.name;
-
 @ApplicationScoped
 public class ExecutorProvider
 {
