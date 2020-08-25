@@ -32,8 +32,8 @@
   <inceptionYear>2013</inceptionYear>
 
   <scm>
-    <connection>scm:git:https://github.com/Commonjava/weft.git</connection>
-    <developerConnection>scm:git:git@github.com:Commonjava/weft.git</developerConnection>
+    <connection>scm:git:https://github.com/commonjava/weft</connection>
+    <developerConnection>scm:git:https://github.com/commonjava/weft</developerConnection>
     <url>https://github.com/Commonjava/weft</url>
     <tag>HEAD</tag>
   </scm>
