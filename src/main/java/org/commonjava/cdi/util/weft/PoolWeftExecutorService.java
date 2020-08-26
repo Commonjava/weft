@@ -15,9 +15,9 @@
  */
 package org.commonjava.cdi.util.weft;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import org.commonjava.cdi.util.weft.exception.PoolOverloadException;
+import org.commonjava.o11yphant.metrics.api.MetricRegistry;
+import org.commonjava.o11yphant.metrics.api.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +39,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import static org.commonjava.o11yphant.metrics.util.NameUtils.name;
 
 /**
  * Created by jdcasey on 1/3/17.

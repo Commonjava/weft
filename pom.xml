@@ -43,7 +43,7 @@
     <projectOwner>Red Hat, Inc.</projectOwner>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
-    <metrics.version>4.0.2</metrics.version>
+    <o11yphantVersion>1.0-SNAPSHOT</o11yphantVersion>
     <weldVersion>2.4.6.Final</weldVersion>
   </properties>
 
@@ -57,14 +57,9 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <version>${metrics.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-healthchecks</artifactId>
-        <version>${metrics.version}</version>
+        <groupId>org.commonjava.util</groupId>
+        <artifactId>o11yphant-metrics-api</artifactId>
+        <version>${o11yphantVersion}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -72,13 +67,10 @@
   <dependencies>
     <!-- metrics support-->
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
+      <groupId>org.commonjava.util</groupId>
+      <artifactId>o11yphant-metrics-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-healthchecks</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>

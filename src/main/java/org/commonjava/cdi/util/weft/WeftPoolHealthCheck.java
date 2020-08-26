@@ -15,10 +15,14 @@
  */
 package org.commonjava.cdi.util.weft;
 
-import com.codahale.metrics.health.HealthCheck;
+import org.commonjava.o11yphant.metrics.api.healthcheck.HealthCheck;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WeftPoolHealthCheck
-        extends HealthCheck
+                implements HealthCheck
 {
     private static final String POOL_SIZE = "pool-size";
 
@@ -34,33 +38,51 @@ public class WeftPoolHealthCheck
     }
 
     @Override
-    protected Result check()
-            throws Exception
+    public Result check() throws Exception
     {
-
-        ResultBuilder builder = Result.builder();
-        if ( pool == null || pool.isHealthy() )
-        {
-            builder = builder.healthy();
-        }
-        else
-        {
-            builder = builder.unhealthy();
-        }
-
+        boolean healthy = false;
+        final String timestamp = new Date().toString();
+        final Map<String, Object> details = new HashMap<>();
         if ( pool != null )
         {
-            builder = builder.withDetail( POOL_SIZE, pool.getThreadCount() )
-                             .withDetail( CURRENT_LOAD, pool.getCurrentLoad() )
-                             .withDetail( LOAD_FACTOR, pool.getLoadFactor() );
-        }
-        else
-        {
-            builder = builder.withDetail( POOL_SIZE, 0 )
-                             .withDetail( CURRENT_LOAD, 0 )
-                             .withDetail( LOAD_FACTOR, 0.0 );
+            healthy = pool.isHealthy();
+            details.put( POOL_SIZE, pool.getThreadCount() );
+            details.put( CURRENT_LOAD, pool.getCurrentLoad() );
+            details.put( LOAD_FACTOR, pool.getLoadFactor() );
         }
 
-        return builder.build();
+        final boolean isHealthy = healthy;
+        return new Result()
+        {
+            @Override
+            public boolean isHealthy()
+            {
+                return isHealthy;
+            }
+
+            @Override
+            public String getMessage()
+            {
+                return null;
+            }
+
+            @Override
+            public Throwable getError()
+            {
+                return null;
+            }
+
+            @Override
+            public String getTimestamp()
+            {
+                return timestamp;
+            }
+
+            @Override
+            public Map<String, Object> getDetails()
+            {
+                return details;
+            }
+        };
     }
 }
