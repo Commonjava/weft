@@ -113,7 +113,15 @@ public class WeftPoolBoy
         }
     }
 
+    /**
+     * TODO: This may cause counter-intuitive sharing of thread pools for un-annotated injections...
+     */
     public synchronized WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
+    {
+        return getPool( "weft-unannotated", ec, scheduled );
+    }
+
+    public synchronized WeftExecutorService getPool( String name, final ExecutorConfig ec, final boolean scheduled )
     {
         Integer threadCount = 0;
         Integer priority = null;
@@ -121,9 +129,6 @@ public class WeftPoolBoy
         Boolean loadSensitive = null;
 
         boolean daemon = true;
-
-        // TODO: This may cause counter-intuitive sharing of thread pools for un-annotated injections...
-        String name = "weft-unannotated";
 
         if ( ec != null )
         {
