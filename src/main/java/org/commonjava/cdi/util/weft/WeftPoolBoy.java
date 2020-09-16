@@ -114,14 +114,22 @@ public class WeftPoolBoy
     }
 
     /**
-     * TODO: This may cause counter-intuitive sharing of thread pools for un-annotated injections...
+     * When we use cdi @Inject, the ec should always has name. The ec.name will override the dummy "weft-unannotated".
      */
     public synchronized WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
     {
         return getPool( "weft-unannotated", ec, scheduled );
     }
 
-    public synchronized WeftExecutorService getPool( String name, final ExecutorConfig ec, final boolean scheduled )
+    /**
+     * Get pool programmatically. We can control it via configuration file. If no config, this will return a single threaded pool.
+     */
+    public synchronized WeftExecutorService getPool( final String name, final boolean scheduled )
+    {
+        return getPool( name, null, scheduled );
+    }
+
+    private WeftExecutorService getPool( String name, final ExecutorConfig ec, final boolean scheduled )
     {
         Integer threadCount = 0;
         Integer priority = null;
