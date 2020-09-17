@@ -36,6 +36,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.commonjava.cdi.util.weft.config.DefaultWeftConfig.DEFAULT_MAX_LOAD_FACTOR;
+import static org.commonjava.cdi.util.weft.config.DefaultWeftConfig.DEFAULT_PRIORITY;
+import static org.commonjava.cdi.util.weft.config.DefaultWeftConfig.DEFAULT_THREADS;
 import static org.commonjava.o11yphant.metrics.util.NameUtils.name;
 
 @ApplicationScoped
@@ -44,6 +48,8 @@ public class WeftPoolBoy
     private final Map<String, WeftExecutorService> pools = new ConcurrentHashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger( getClass() );
+
+    private static final String DUMMY_NAME = "weft-anonymous";
 
     @Inject
     private WeftConfig config;
@@ -114,48 +120,55 @@ public class WeftPoolBoy
     }
 
     /**
-     * When we use cdi @Inject, the ec should always has name. The ec.name will override the dummy "weft-unannotated".
+     * Get pool programmatically. This is simplified version for {@link WeftPoolBoy#getPool(String, int, int, float, boolean, boolean, boolean)}
      */
-    public synchronized WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
+    public synchronized WeftExecutorService getPool( final String name, int threadCount, final boolean scheduled )
     {
-        return getPool( "weft-unannotated", ec, scheduled );
+        if ( threadCount <= 0 )
+        {
+            throw new IllegalStateException( "Cannot create executor, invalid threadCount: " + threadCount );
+        }
+        return getPool( name, threadCount, DEFAULT_PRIORITY, DEFAULT_MAX_LOAD_FACTOR, false, true, scheduled );
     }
 
     /**
-     * Get pool programmatically. We can control it via configuration file. If no config, this will return a single threaded pool.
+     * This method is used when using cdi @Inject.
      */
-    public synchronized WeftExecutorService getPool( final String name, final boolean scheduled )
+    public WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
     {
-        return getPool( name, null, scheduled );
-    }
-
-    private WeftExecutorService getPool( String name, final ExecutorConfig ec, final boolean scheduled )
-    {
-        Integer threadCount = 0;
-        Integer priority = null;
-        Float maxLoadFactor = null;
-        Boolean loadSensitive = null;
-
-        boolean daemon = true;
-
         if ( ec != null )
         {
-            threadCount = ec.threads();
-            name = ec.named();
-            priority = ec.priority();
-            maxLoadFactor = ec.maxLoadFactor();
-            daemon = ec.daemon();
+            int threadCount = ec.threads();
+            String name = ec.named();
+            if ( isBlank( name ) )
+            {
+                name = DUMMY_NAME;
+            }
+
+            int priority = ec.priority();
+            float maxLoadFactor = ec.maxLoadFactor();
+            boolean daemon = ec.daemon();
 
             ExecutorConfig.BooleanLiteral ls = ec.loadSensitive();
-            if ( ls == ExecutorConfig.BooleanLiteral.FALSE )
-            {
-                loadSensitive = false;
-            }
-            else if ( ls == ExecutorConfig.BooleanLiteral.TRUE )
+            boolean loadSensitive = false;
+            if ( ls == ExecutorConfig.BooleanLiteral.TRUE )
             {
                 loadSensitive = true;
             }
+            return getPool( name, threadCount, priority, maxLoadFactor, loadSensitive, daemon, scheduled );
         }
+        else
+        {
+            return getPool( DUMMY_NAME, DEFAULT_THREADS, DEFAULT_PRIORITY, DEFAULT_MAX_LOAD_FACTOR, false, true, scheduled );
+        }
+    }
+
+    /**
+     * Get pool programmatically. The parameters can be overridden via configuration file. If no config, this will create thread pool as is.
+     */
+    public WeftExecutorService getPool( String name, int threadCount, int priority, float maxLoadFactor,
+                                        boolean loadSensitive, boolean daemon, final boolean scheduled )
+    {
 
         final String key = name + ( scheduled ? ":scheduled" : "" );
         WeftExecutorService service = getPool( key );
@@ -168,19 +181,19 @@ public class WeftPoolBoy
             }
             else
             {
-                threadCount = 1;
-//                throw new IllegalStateException( "Cannot create executor for disabled, scheduled executor: " + name );
+                throw new IllegalStateException( "Cannot create executor for disabled scheduled executor: " + name );
             }
         }
 
-        threadCount = config.getThreads( name, threadCount );
-        priority = config.getPriority( name, priority );
-        maxLoadFactor = config.getMaxLoadFactor( name, maxLoadFactor );
-        loadSensitive = config.isLoadSensitive( name, loadSensitive );
-
-        ThreadPoolExecutor svc = null;
         if ( service == null )
         {
+            threadCount = config.getThreads( name, threadCount );
+            priority = config.getPriority( name, priority );
+            maxLoadFactor = config.getMaxLoadFactor( name, maxLoadFactor );
+            loadSensitive = config.isLoadSensitive( name, loadSensitive );
+
+            ThreadPoolExecutor svc;
+
             ThreadGroup threadGroup = new ThreadGroup( name );
             final NamedThreadFactory fac = new NamedThreadFactory( name, threadGroup, daemon, priority );
 
@@ -188,10 +201,9 @@ public class WeftPoolBoy
             {
                 if ( threadCount < 1 )
                 {
-                    logger.warn( ec + " must specify a non-zero number for threads parameter in @ExecutorConfig." );
+                    logger.warn( "Must specify a non-zero number for threads" );
                     threadCount = config.getDefaultThreads();
                 }
-
                 svc = (ThreadPoolExecutor) Executors.newScheduledThreadPool( threadCount, fac );
             }
             else if ( threadCount > 0 )
