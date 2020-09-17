@@ -134,7 +134,7 @@ public class WeftPoolBoy
     /**
      * This method is used when using cdi @Inject.
      */
-    public WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
+    public synchronized WeftExecutorService getPool( final ExecutorConfig ec, final boolean scheduled )
     {
         if ( ec != null )
         {
@@ -166,7 +166,7 @@ public class WeftPoolBoy
     /**
      * Get pool programmatically. The parameters can be overridden via configuration file. If no config, this will create thread pool as is.
      */
-    public WeftExecutorService getPool( String name, int threadCount, int priority, float maxLoadFactor,
+    public synchronized WeftExecutorService getPool( String name, int threadCount, int priority, float maxLoadFactor,
                                         boolean loadSensitive, boolean daemon, final boolean scheduled )
     {
 
