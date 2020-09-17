@@ -29,12 +29,11 @@ public class DefaultWeftConfig
 
     public static final String PRIORITY_SUFFIX = "p";
 
-    private static final int DEFAULT_THREADS = Runtime.getRuntime()
-                                                      .availableProcessors() * 2;
+    public static final int DEFAULT_THREADS = Runtime.getRuntime().availableProcessors() * 2;
 
-    private static final int DEFAULT_PRIORITY = 8;
+    public static final int DEFAULT_PRIORITY = 8;
 
-    private static final float DEFAULT_MAX_LOAD_FACTOR = 10.0f;
+    public static final float DEFAULT_MAX_LOAD_FACTOR = 10.0f;
 
     private boolean enabled = true;
 
