@@ -45,7 +45,6 @@
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
     <o11yphantVersion>1.0-SNAPSHOT</o11yphantVersion>
     <weldVersion>2.4.6.Final</weldVersion>
-    <annotationVersion>1.3.2</annotationVersion>
   </properties>
 
   <dependencyManagement>
@@ -61,11 +60,6 @@
         <groupId>org.commonjava.util</groupId>
         <artifactId>o11yphant-metrics-api</artifactId>
         <version>${o11yphantVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.annotation</groupId>
-        <artifactId>javax.annotation-api</artifactId>
-        <version>${annotationVersion}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -84,10 +78,6 @@
     <dependency>
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
