@@ -43,7 +43,7 @@
     <projectOwner>Red Hat, Inc.</projectOwner>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
-    <o11yphantVersion>1.0-SNAPSHOT</o11yphantVersion>
+    <o11yphantVersion>1.0</o11yphantVersion>
     <weldVersion>2.4.6.Final</weldVersion>
     <annotationVersion>1.3.2</annotationVersion>
   </properties>
