@@ -21,6 +21,6 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
     - name: Build with Maven
-      run: mvn -B -e deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/Commonjava/weft
+      run: mvn -B -e deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/OWNER/CI-snapshots
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
