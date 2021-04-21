@@ -20,7 +20,11 @@ jobs:
       with:
         java-version: '11'
         distribution: 'adopt'
+        server-id: sonatype
+        server-username: SONATYPE_BOT_USERNAME
+        server-password: SONATYPE_BOT_TOKEN
     - name: Build with Maven
-      run: mvn -B -e deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/Commonjava/CI-snapshots
+      run: mvn -B -e deploy -DaltSnapshotDeploymentRepository=sonatype::default::https://oss.sonatype.org/content/repositories/snapshots/
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONATYPE_BOT_USERNAME: ${{ secrets.SONATYPE_BOT_USERNAME}}
+        SONATYPE_BOT_TOKEN: ${{ secrets.SONATYPE_BOT_TOKEN}}
