@@ -28,15 +28,8 @@ jobs:
     - name: maven-settings-xml-action
       uses: whelk-io/maven-settings-xml-action@v14
       with:
-        repositories: 
-          - id: sonatype
-            url: https://oss.sonatype.org/content/repositories/snapshots/
-            releases.enabled: false
-            snapshots.enabled: true
-        servers:
-          - id: sonatype
-            username: $SONATYPE_BOT_USERNAME
-            password: $SONATYPE_BOT_TOKEN
+        repositories: '[{ "id": "sonatype", "url": "https://oss.sonatype.org/content/repositories/snapshots/", "releases.enabled": "false", "snapshots.enabled": "true" }]'
+        servers: '[{ "id": "sonatype", "username": "$SONATYPE_BOT_USERNAME", "password": "$SONATYPE_BOT_TOKEN" }]'
       env:
         SONATYPE_BOT_USERNAME: ${{ secrets.SONATYPE_BOT_USERNAME}}
         SONATYPE_BOT_TOKEN: ${{ secrets.SONATYPE_BOT_TOKEN}}
