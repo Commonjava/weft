@@ -85,12 +85,19 @@ public class Locker<K>
         boolean waitingLocked = false;
         try
         {
-            //TODO: will let non-working threads wait here for seconds for the result of the working thread processing. Need to evaluate how long should wait here in future.
+            // Let non-working threads wait here for seconds for the result of the working thread processing. Need to evaluate how long should wait here in future.
             waitingLocked = lock.tryLock( timeoutSeconds, TimeUnit.SECONDS );
         }
         catch ( InterruptedException e )
         {
             logger.warn( "Thread interrupted by other threads for waiting processing result: {}", e.getMessage() );
+        }
+        finally
+        {
+            if ( lock.isHeldByCurrentThread() )
+            {
+                lock.unlock();
+            }
         }
 
         return waitingLocked;
