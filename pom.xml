@@ -1,6 +1,6 @@
 <!--
 
-    Copyright (C) 2013-2022 Red Hat, Inc. (jdcasey@commonjava.org)
+    Copyright (C) 2013-2022 Red Hat, Inc. (https://github.com/Commonjava/weft)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
   <properties>
     <javaVersion>1.8</javaVersion>
     <projectOwner>Red Hat, Inc.</projectOwner>
+    <projectEmail>https://github.com/Commonjava/weft</projectEmail>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
     <o11yphantVersion>1.8</o11yphantVersion>
