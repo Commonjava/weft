@@ -4,7 +4,7 @@ on:
   watch:
     types: [started]
   pull_request:
-    types: [opened, reopened, edited]
+    types: [opened, reopened, edited, synchronize, ready_for_review]
   push:
     branches:
       - main
