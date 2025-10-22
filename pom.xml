@@ -21,13 +21,13 @@
   <parent>
     <groupId>org.commonjava</groupId>
     <artifactId>commonjava</artifactId>
-    <version>18</version>
+    <version>21</version>
   </parent>
-  
+
   <groupId>org.commonjava.cdi.util</groupId>
   <artifactId>weft</artifactId>
   <version>2.2-SNAPSHOT</version>
-  
+
   <name>Weft CDI-Thread/Executor Provider</name>
   <inceptionYear>2013-2022</inceptionYear>
 
@@ -44,7 +44,7 @@
     <projectEmail>https://github.com/Commonjava/weft</projectEmail>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
-    <o11yphantVersion>1.9.2-SNAPSHOT</o11yphantVersion>
+    <o11yphantVersion>1.9.2</o11yphantVersion>
     <weldVersion>5.1.2.Final</weldVersion>
     <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
@@ -56,7 +56,7 @@
       <dependency>
         <groupId>org.commonjava.boms</groupId>
         <artifactId>web-commons-bom</artifactId>
-        <version>29</version>
+        <version>31</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -67,7 +67,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  
+
   <dependencies>
     <!-- metrics support-->
     <dependency>
