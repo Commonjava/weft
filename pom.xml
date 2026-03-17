@@ -45,7 +45,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.jacoco.skip>false</plugin.jacoco.skip>
     <o11yphantVersion>1.9.2</o11yphantVersion>
-    <weldVersion>5.1.2.Final</weldVersion>
+    <weldVersion>5.1.7.Final</weldVersion>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
     <jakarta.enterprise.version>4.0.1</jakarta.enterprise.version>
