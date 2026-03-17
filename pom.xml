@@ -48,7 +48,7 @@
     <weldVersion>5.1.7.Final</weldVersion>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
-    <jakarta.enterprise.version>4.0.1</jakarta.enterprise.version>
+    <jakarta.enterprise.version>4.1.0</jakarta.enterprise.version>
   </properties>
 
   <dependencyManagement>
