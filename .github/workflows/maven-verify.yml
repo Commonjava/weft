@@ -34,11 +34,9 @@ jobs:
         distribution: 'temurin'
         architecture: x64
 
-    - name: maven-settings-xml-action
-      uses: whelk-io/maven-settings-xml-action@v22
+    - uses: s4u/maven-settings-action@v2.8.0
       with:
-        repositories: '[{ "id": "sonatype", "url": "https://oss.sonatype.org/content/repositories/snapshots/", "releases": {"enabled": "false"}, "snapshots": {"enabled": "true" }}]'
-
+        sonatypeSnapshots: true
 
     - name: Build the Maven verify phase
       run: mvn -B -V clean verify -Prun-its -Pci

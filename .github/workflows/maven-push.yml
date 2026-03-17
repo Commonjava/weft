@@ -31,20 +31,27 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Set up JDK 11 for x64
+    - name: Set up JDK
       uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
         architecture: x64
 
-    - name: maven-settings-xml-action
-      uses: whelk-io/maven-settings-xml-action@v22
-      if: ${{ github.event.repository.fork == false }}
+    - uses: s4u/maven-settings-action@v2.8.0
       with:
-        repositories: '[{ "id": "sonatype", "url": "https://oss.sonatype.org/content/repositories/snapshots/", "releases": {"enabled": "false"}, "snapshots": {"enabled": "true" }}]'
-        servers: '[{ "id": "sonatype", "username": "${{ secrets.SONATYPE_BOT_USERNAME}}", "password": "${{ secrets.SONATYPE_BOT_TOKEN}}" }]'
-    
+        sonatypeSnapshots: true
+
+    - uses: s4u/maven-settings-action@v2.8.0
+      if: ${{ github.event_name == 'push' }}
+      with:
+        servers: |
+          [{
+              "id": "central-portal-snapshots",
+              "username": "${{ secrets.SONATYPE_BOT_USERNAME }}",
+              "password": "${{ secrets.SONATYPE_BOT_TOKEN }}"
+          }]
+
     - name: Deploy the artifact
       if: ${{ github.event_name == 'push' }}
       run: mvn help:effective-settings -B -V clean deploy -e
