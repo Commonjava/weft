@@ -16,8 +16,6 @@
 package org.commonjava.cdi.util.weft;
 
 import org.commonjava.cdi.util.weft.exception.PoolOverloadException;
-import org.commonjava.o11yphant.metrics.api.MetricRegistry;
-import org.commonjava.o11yphant.metrics.api.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,18 +38,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.commonjava.o11yphant.metrics.util.NameUtils.name;
-
 /**
  * Created by jdcasey on 1/3/17.
  */
 public class PoolWeftExecutorService
         implements WeftExecutorService, ScheduledExecutorService
 {
-    private static final String TIMER = "timer";
-
-    private static final String METER = "meter";
-
     private static final int DEFAULT_THREAD_COUNT = 2;
 
     private static final float DEFAULT_LOAD_FACTOR = 10f;
@@ -68,10 +60,6 @@ public class PoolWeftExecutorService
 
     private final boolean loadSensitive;
 
-    private final MetricRegistry metricRegistry;
-
-    private final String metricPrefix;
-
     private Set<ThreadContextualizer> contextualizers;
 
     private final AtomicLong load = new AtomicLong( 0L );
@@ -79,21 +67,19 @@ public class PoolWeftExecutorService
 
     public PoolWeftExecutorService( String name, ThreadPoolExecutor delegate )
     {
-        this( name, delegate, DEFAULT_THREAD_COUNT, DEFAULT_LOAD_FACTOR, DEFAULT_LOAD_SENSITIVE, null, null,
+        this( name, delegate, DEFAULT_THREAD_COUNT, DEFAULT_LOAD_FACTOR, DEFAULT_LOAD_SENSITIVE,
               Collections.emptySet() );
     }
 
     public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount,
-                                    final Float maxLoadFactor, boolean loadSensitive,
-                                    final MetricRegistry metricRegistry, final String metricPrefix )
+                                    final Float maxLoadFactor, boolean loadSensitive )
     {
-        this( name, delegate, threadCount, maxLoadFactor, loadSensitive, metricRegistry, metricPrefix,
+        this( name, delegate, threadCount, maxLoadFactor, loadSensitive,
               Collections.emptySet() );
     }
 
     public PoolWeftExecutorService( final String name, ThreadPoolExecutor delegate, final Integer threadCount,
                                     final Float maxLoadFactor, boolean loadSensitive,
-                                    final MetricRegistry metricRegistry, final String metricPrefix,
                                     Iterable<ThreadContextualizer> contextualizers )
     {
         this.name = name;
@@ -101,8 +87,6 @@ public class PoolWeftExecutorService
         this.threadCount = threadCount;
         this.maxLoadFactor = maxLoadFactor;
         this.loadSensitive = loadSensitive;
-        this.metricRegistry = metricRegistry;
-        this.metricPrefix = metricPrefix;
         this.contextualizers = new HashSet<>();
         contextualizers.forEach( c -> this.contextualizers.add( c ) );
     }
@@ -175,7 +159,7 @@ public class PoolWeftExecutorService
             throw new PoolOverloadException( getName(), getLoadFactor(), getCurrentLoad(), maxLoadFactor, getThreadCount() );
         }
     }
-    
+
     @Override
     public <T> Future<T> submit( Callable<T> callable )
     {
@@ -313,52 +297,6 @@ public class PoolWeftExecutorService
         }
     }
 
-    private <T> Callable<T> timeCallable( Callable<T> callable )
-    {
-        return (Callable<T>) ()->{
-            if( metricRegistry != null )
-            {
-                metricRegistry.meter( name( metricPrefix, "call", METER ) ).mark();
-                Timer.Context context = metricRegistry.timer( name( metricPrefix, "call", TIMER ) ).time();
-                try
-                {
-                    return callable.call();
-                }
-                finally
-                {
-                    context.stop();
-                }
-            }
-            else
-            {
-                return callable.call();
-            }
-        };
-    }
-
-    private Runnable timeRunnable( Runnable runnable )
-    {
-        return ()->{
-            if( metricRegistry != null )
-            {
-                metricRegistry.meter( name( metricPrefix, "run", METER ) ).mark();
-                Timer.Context context = metricRegistry.timer( name( metricPrefix, "run", TIMER ) ).time();
-                try
-                {
-                    runnable.run();
-                }
-                finally
-                {
-                    context.stop();
-                }
-            }
-            else
-            {
-                runnable.run();
-            }
-        };
-    }
-
     private <T> Collection<Callable<T>> wrapAll( Collection<? extends Callable<T>> collection )
     {
         ThreadContext ctx = ThreadContext.getContext( false );
@@ -369,7 +307,7 @@ public class PoolWeftExecutorService
             setContext( extractedContext );
             Logger logger = LoggerFactory.getLogger( getClass() );
             logger.debug( "Using ThreadContext: {} (saving: {}) in {}", ctx, old, Thread.currentThread().getName() );
-            return timeCallable((Callable<T>) () -> {
+            return (Callable<T>) () -> {
                 try
                 {
                     return callable.call();
@@ -381,7 +319,7 @@ public class PoolWeftExecutorService
                     clearBridgedContext();
                     load.decrementAndGet();
                 }
-            });
+            };
         } ).collect( Collectors.toList() );
     }
 
@@ -390,7 +328,7 @@ public class PoolWeftExecutorService
         ThreadContext ctx = ThreadContext.getContext( false );
         Map<String, Object> extractedContext = extractContext();
         load.incrementAndGet();
-        return timeRunnable(()->{
+        return ()->{
             ThreadContext old = ThreadContext.setContext( ctx );
             setContext( extractedContext );
             Logger logger = LoggerFactory.getLogger( getClass() );
@@ -407,7 +345,7 @@ public class PoolWeftExecutorService
                 clearBridgedContext();
                 load.decrementAndGet();
             }
-        });
+        };
     }
 
     private <T> Callable<T> wrapCallable( Callable<T> callable )
@@ -415,7 +353,7 @@ public class PoolWeftExecutorService
         ThreadContext ctx = ThreadContext.getContext( false );
         Map<String, Object> extractedContext = extractContext();
         load.incrementAndGet();
-        return timeCallable((Callable<T>) ()->{
+        return (Callable<T>) ()->{
             ThreadContext old = ThreadContext.setContext( ctx );
             setContext( extractedContext );
             Logger logger = LoggerFactory.getLogger( getClass() );
@@ -431,7 +369,7 @@ public class PoolWeftExecutorService
                 clearBridgedContext();
                 load.decrementAndGet();
             }
-        });
+        };
     }
 
     private void clearBridgedContext()
