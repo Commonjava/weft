@@ -16,12 +16,9 @@
 package org.commonjava.cdi.util.weft;
 
 import org.commonjava.cdi.util.weft.config.WeftConfig;
-import org.commonjava.o11yphant.metrics.api.Gauge;
-import org.commonjava.o11yphant.metrics.api.MetricRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -36,11 +33,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.commonjava.cdi.util.weft.config.DefaultWeftConfig.DEFAULT_MAX_LOAD_FACTOR;
 import static org.commonjava.cdi.util.weft.config.DefaultWeftConfig.DEFAULT_PRIORITY;
 import static org.commonjava.cdi.util.weft.config.DefaultWeftConfig.DEFAULT_THREADS;
-import static org.commonjava.o11yphant.metrics.util.NameUtils.name;
 
 @ApplicationScoped
 public class WeftPoolBoy
@@ -55,28 +50,13 @@ public class WeftPoolBoy
     private WeftConfig config;
 
     @Inject
-    private Instance<MetricRegistry> metricRegistryInstance;
-
-    private MetricRegistry metricRegistry;
-
-    @Inject
     private Instance<ThreadContextualizer> contextualizers;
 
     protected WeftPoolBoy(){}
 
-    public WeftPoolBoy( WeftConfig config, MetricRegistry registry )
+    public WeftPoolBoy( WeftConfig config )
     {
         this.config = config;
-        this.metricRegistry = registry;
-    }
-
-    @PostConstruct
-    public void init()
-    {
-        if ( !metricRegistryInstance.isUnsatisfied() )
-        {
-            this.metricRegistry = metricRegistryInstance.get();
-        }
     }
 
     public WeftExecutorService getPool( final String key )
@@ -140,7 +120,7 @@ public class WeftPoolBoy
         {
             int threadCount = ec.threads();
             String name = ec.named();
-            if ( isBlank( name ) )
+            if ( name == null || name.trim().isEmpty() )
             {
                 name = DUMMY_NAME;
             }
@@ -215,33 +195,17 @@ public class WeftPoolBoy
                 svc = (ThreadPoolExecutor) Executors.newCachedThreadPool( fac );
             }
 
-            String metricPrefix = name( config.getNodePrefix(), "weft.ThreadPoolExecutor", name );
-
-            service = new PoolWeftExecutorService( name, svc, threadCount, maxLoadFactor, loadSensitive, metricRegistry,
-                                                   metricPrefix, contextualizers );
+            service = new PoolWeftExecutorService( name, svc, threadCount, maxLoadFactor, loadSensitive,
+                                                   contextualizers );
 
             // TODO: Wrapper ThreadPoolExecutor that wraps Runnables to store/copy MDC when it gets created/started.
 
             addPool( service );
-            registerMetrics( metricPrefix, service );
         }
 
         return service;
     }
 
-
-    private void registerMetrics( String prefix, WeftExecutorService pool )
-    {
-        if ( metricRegistry != null )
-        {
-            metricRegistry.register( name( prefix, "corePoolSize" ), (Gauge<Integer>) () -> pool.getCorePoolSize() );
-            metricRegistry.register( name( prefix, "activeThreads" ), (Gauge<Integer>) () -> pool.getActiveCount() );
-            metricRegistry.register( name( prefix, "loadFactor" ), (Gauge<Double>) () -> pool.getLoadFactor() );
-            metricRegistry.register( name( prefix, "currentLoad" ), (Gauge<Long>) () -> pool.getCurrentLoad() );
-
-            metricRegistry.registerHealthCheck( name( prefix, pool.getName() ), new WeftPoolHealthCheck( pool ) );
-        }
-    }
 
     public Map<String, WeftExecutorService> getPools()
     {
