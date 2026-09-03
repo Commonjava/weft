@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.commonjava</groupId>
     <artifactId>commonjava</artifactId>
-    <version>21</version>
+    <version>23</version>
   </parent>
 
   <groupId>org.commonjava.cdi.util</groupId>
@@ -53,7 +53,7 @@
       <dependency>
         <groupId>org.commonjava.boms</groupId>
         <artifactId>web-commons-bom</artifactId>
-        <version>34</version>
+        <version>35</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -69,6 +69,7 @@
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
+      <version>1</version>
     </dependency>
     <dependency>
       <groupId>javax.enterprise</groupId>
@@ -114,4 +115,12 @@
     </plugins>
   </build>
 
+  <repositories>
+    <repository>
+      <id>sonatype-snapshots</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      <releases><enabled>false</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+  </repositories>
 </project>
