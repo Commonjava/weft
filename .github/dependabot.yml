@@ -42,6 +42,9 @@ updates:
         - "org.jboss.da:*"
         - "org.jboss.pnc*:*"
         - "org.commonjava*:*"
+    ignore:
+      - dependency-name: "org.jboss.weld.se:weld-se-shaded"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "1.x"
@@ -49,6 +52,3 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
-    ignore:
-      - dependency-name: "org.jboss.weld.se:weld-se-shaded"
-        update-types: ["version-update:semver-major"]
