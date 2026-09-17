@@ -27,3 +27,22 @@ updates:
     # a compromised new version
     cooldown:
       default-days: 7
+  # Same updates, for 1.x
+  - package-ecosystem: "maven"
+    directory: "/"
+    target-branch: "1.x"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+      exclude:
+        - "org.jboss.da:*"
+        - "org.jboss.pnc*:*"
+        - "org.commonjava*:*"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "1.x"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
