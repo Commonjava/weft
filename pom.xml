@@ -1,12 +1,12 @@
 <!--
 
-    Copyright (C) 2013-2022 Red Hat, Inc. (https://github.com/Commonjava/weft)
+    Copyright © 2013-2022 Red Hat, Inc. (https://github.com/Commonjava/weft)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-            http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.commonjava</groupId>
     <artifactId>commonjava</artifactId>
-    <version>21</version>
+    <version>23</version>
   </parent>
 
   <groupId>org.commonjava.cdi.util</groupId>
@@ -53,7 +53,7 @@
       <dependency>
         <groupId>org.commonjava.boms</groupId>
         <artifactId>web-commons-bom</artifactId>
-        <version>34</version>
+        <version>35</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -69,6 +69,7 @@
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
+      <version>1</version>
     </dependency>
     <dependency>
       <groupId>javax.enterprise</groupId>
@@ -114,4 +115,12 @@
     </plugins>
   </build>
 
+  <repositories>
+    <repository>
+      <id>sonatype-snapshots</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      <releases><enabled>false</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+  </repositories>
 </project>
